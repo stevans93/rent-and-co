@@ -1,0 +1,16 @@
+### LOGIN 
+POST http://localhost:4000/api/auth/login 
+Content-Type: application/json 
+{
+    "email": "stevans932@gmail.com", 
+    "password": "312392"
+}
+
+POST http://localhost:4000/api/auth/register
+Content-Type: application/json
+{
+    "firstName": "Steva",
+    "lastName": "Stevanovic",
+    "email": "stevans932@gmail.com",
+    "password": "312392"
+}
