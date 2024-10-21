@@ -1,27 +1,11 @@
 import { Response, Request } from "express";
-import User from "../../models/user";
-import { hashPassword } from "../../utils/bcrypt";
+import { registerService } from "../../services/auth/register";
 
-const register = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  console.log("body " + req.body);
+export const register = async (req: Request, res: Response) => {
+  // Inline export
+  const body = req.body;
 
-  let user = await User.findOne({ email });
+  const data = await registerService({ ...body });
 
-  if (user) {
-    return res.status(400).json({ message: "Korisnik već postoji!" });
-  }
-
-  const hashedPassword = await hashPassword(password);
-
-  user = new User({
-    email,
-    password: hashedPassword,
-  });
-
-  await user.save();
-
-  return res.status(201).json({ message: "Korisnik uspešno registrovan!" });
+  return res.status(200).json(data);
 };
-
-export default register;

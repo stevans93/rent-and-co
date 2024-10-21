@@ -2,8 +2,8 @@ import mongoose, { Model, Schema } from "mongoose";
 import { IUserDB } from "../types/database";
 
 const userSchema = new mongoose.Schema<IUserDB>({
-  firstName: { type: String, required: false, trim: true },
-  lastName: { type: String, required: false, trim: true },
+  firstName: { type: String, required: true, trim: true },
+  lastName: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, unique: true },
   password: { type: String, required: true, minlength: 6 },
   city: { type: String, default: "" },
