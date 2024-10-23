@@ -16,6 +16,7 @@ export const registerService = async (data: IRegisterRequest) => {
   const hashedPassword = await hashPassword(password);
 
   user = new User({
+    ...data,
     email,
     password: hashedPassword,
   });
