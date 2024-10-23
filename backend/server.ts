@@ -15,12 +15,12 @@ server.use(
 );
 
 mongoose
-  .connect(DB_URL || "")
+  .connect(DB_URL)
   .then(() => {
     console.log("MongoDB Connected!");
   })
   .catch((err: Error) => {
-    console.log(err);
+    console.log(err, DB_URL);
   });
 
 server.use(express.json());

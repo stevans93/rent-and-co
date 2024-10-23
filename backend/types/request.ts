@@ -22,3 +22,8 @@ export interface IRegisterRequest {
   socialSecurityNumber: string;
   wishList: Types.ObjectId[];
 }
+
+export interface ILoginRequest {
+  email: string;
+  password: string;
+}
