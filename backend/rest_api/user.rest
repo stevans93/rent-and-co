@@ -1,2 +1,5 @@
 ### GET ALL USERS 
 GET http://localhost:4000/api/user/all
+
+### DELETE USER
+DELETE http://localhost:4000/api/user/6716a3fe77b1e34fe97f6088
