@@ -1,6 +1,9 @@
 export default function HomePage() {
 
     return (
-        <h1>Home Page!</h1>
+        <div className="flex-1">
+            <h1>Home Page!</h1>
+
+        </div>
     )
 }
