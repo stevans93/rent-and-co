@@ -1,15 +1,12 @@
-import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer/Footer';
-
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar/Navbar";
+import Footer from "../components/Footer/Footer";
 export default function HomeLayout() {
-
-    return (
-        <div className='h-screen flex flex-col'>
-            <Navbar />
-            <Outlet />
-            <Footer />
-        </div>
-    )
-
+  return (
+    <div className="h-screen flex flex-col">
+      <Navbar />
+      {/* <Outlet /> */}
+      {/* <Footer /> */}
+    </div>
+  );
 }
