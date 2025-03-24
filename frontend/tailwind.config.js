@@ -27,7 +27,11 @@ export default {
         'orange': '#eb6652',
         'orange-light': '#FFF3E0',
         'layout-dark-lighter': '#333333',
-        'ghost-white': '#BEBDBD'
+        'ghost-white': '#BEBDBD',
+        'lightest-gray': "#f7f7f7"
+      },
+      backgroundImage: {
+        'hero-image': "url('https://amdesign.rs/rent&co/images/home/home-1.jpg')"
       },
     },
   },
