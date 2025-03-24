@@ -1,4 +1,12 @@
+import { useState } from "react";
+
 const useLinkModals = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   const links = [
     { id: 1, name: "Pocetna", path: "/", icon: "" },
     { id: 2, name: "Pronađi oglas", path: "/findProduct", icon: "" },
@@ -9,7 +17,7 @@ const useLinkModals = () => {
     { id: 7, name: "Registruj se", path: "/register", icon: "account_circle" },
   ];
 
-  return { links };
+  return { isSidebarOpen, setIsSidebarOpen, toggleSidebar, links };
 };
 
 export default useLinkModals;

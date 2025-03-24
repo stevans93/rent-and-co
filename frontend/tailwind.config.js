@@ -23,15 +23,16 @@ export default {
         break18: "1800px",
       },
       colors: {
-        'layout-dark': '#2a2a2b',
-        'orange': '#eb6652',
-        'orange-light': '#FFF3E0',
-        'layout-dark-lighter': '#333333',
-        'ghost-white': '#BEBDBD',
-        'lightest-gray': "#f7f7f7"
+        "layout-dark": "#2a2a2b",
+        orange: "#eb6652",
+        "orange-light": "#FFF3E0",
+        "layout-dark-lighter": "#333333",
+        "ghost-white": "#BEBDBD",
+        "lightest-gray": "#f7f7f7",
       },
       backgroundImage: {
-        'hero-image': "url('https://amdesign.rs/rent&co/images/home/home-1.jpg')"
+        "hero-image":
+          "url('https://amdesign.rs/rent&co/images/home/home-1.jpg')",
       },
     },
   },

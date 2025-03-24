@@ -3,16 +3,9 @@ import Links from "./Links";
 import useLinkModals from "../../hooks/useLinkModals";
 import Button from "../Button";
 import ToggleSidebar from "./ToggleSidebar";
-import { useState } from "react";
 
 const Nav = () => {
-  const { links } = useLinkModals();
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const { isSidebarOpen, toggleSidebar, links } = useLinkModals();
 
   return (
     <nav className="py-5 flex justify-between items-center">
@@ -35,7 +28,7 @@ const Nav = () => {
         </button>
       </div>
 
-      <ToggleSidebar isSidebarOpen={isSidebarOpen} />
+      {isSidebarOpen ? <ToggleSidebar toggleSidebar={toggleSidebar} /> : null}
     </nav>
   );
 };
