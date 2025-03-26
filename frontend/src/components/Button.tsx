@@ -7,18 +7,24 @@ export default function Button({
   className,
   icon,
   iconClassName,
+  spanClassName,
+  onClick,
 }: {
   innerText: string;
   link?: string;
   className?: string;
   icon?: string;
   iconClassName?: string;
+  spanClassName?: string;
+  onClick?: () => void;
 }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (link) {
       navigate(link);
+    } else if (onClick) {
+      onClick();
     }
   };
 
@@ -27,7 +33,8 @@ export default function Button({
       onClick={handleClick}
       className={CS("px-4 py-3 rounded-xl", className)}
     >
-      {innerText} {icon && <span className={CS(iconClassName)}>{icon}</span>}
+      <span className={CS(spanClassName)}>{innerText}</span>{" "}
+      {icon && <span className={CS(iconClassName)}>{icon}</span>}
     </button>
   );
 }

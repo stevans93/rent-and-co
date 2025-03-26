@@ -9,7 +9,10 @@ function PageWrapper({
 }) {
   return (
     <div
-      className={CS("flex h-full flex-col mx-auto w-full max-w-7xl", className)}
+      className={CS(
+        "flex h-full flex-col mx-auto w-full max-w-7xl px-5",
+        className
+      )}
     >
       {children}
     </div>

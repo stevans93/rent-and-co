@@ -1,32 +1,29 @@
 import PageHeading from "../PageHeading";
 import Links from "./Links";
 import useLinkModals from "../../hooks/useLinkModals";
-import Button from "../Button";
 import ToggleSidebar from "./ToggleSidebar";
+import NavButtons from "./NavButtons";
 
 const Nav = () => {
   const { isSidebarOpen, toggleSidebar, links } = useLinkModals();
 
   return (
     <nav className="py-5 flex justify-between items-center">
-      <PageHeading input={"RENT&CO"} className="text-orange h2" />
+      <PageHeading
+        input={"RENT&CO"}
+        className="text-orange text-[30px] break5:text-[48px] pr-1"
+      />
 
-      <Links links={links} iconClassName="material-symbols-outlined" />
+      <Links
+        links={links}
+        iconClassName="material-symbols-outlined"
+        className={
+          "hidden break12:flex items-center gap-2 transition-colors duration-300 hover:text-orange"
+        }
+        secondClassName={"flex gap-8"}
+      />
 
-      <div className="flex gap-4 items-center">
-        <Button
-          innerText={"Dodaj oglas"}
-          className={"bg-orange px-4 py-3 rounded-xl flex items-center gap-2"}
-          icon={"north_east"}
-          iconClassName={"material-symbols-outlined text-base"}
-        />
-        <button
-          className="material-symbols-outlined hover:cursor-pointer hover:text-orange"
-          onClick={toggleSidebar}
-        >
-          menu
-        </button>
-      </div>
+      <NavButtons toggleSidebar={toggleSidebar} />
 
       {isSidebarOpen ? <ToggleSidebar toggleSidebar={toggleSidebar} /> : null}
     </nav>
