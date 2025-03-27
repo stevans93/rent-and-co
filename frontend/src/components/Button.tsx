@@ -7,25 +7,26 @@ export default function Button({
   className,
   icon,
   iconClassName,
-  callbackFunction,
-  type
+  type,
+  spanClassName,
+  onClick,
 }: {
   innerText?: string;
   link?: string;
   className?: string;
   icon?: string;
   iconClassName?: string;
-  callbackFunction?: () => void;
   type?: "submit" | "reset" | "button";
+  spanClassName?: string;
+  onClick?: () => void;
 }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (link) {
       navigate(link);
-    }
-    else if (callbackFunction) {
-      callbackFunction();
+    } else if (onClick) {
+      onClick();
     }
   };
 
@@ -35,7 +36,8 @@ export default function Button({
       className={CS("px-4 py-3 rounded-xl", className)}
       type={type ?? "button"}
     >
-      {innerText} {icon && <span className={CS(iconClassName)}>{icon}</span>}
+      <span className={CS(spanClassName)}>{innerText}</span>{" "}
+      {icon && <span className={CS(iconClassName)}>{icon}</span>}
     </button>
   );
 }

@@ -12,23 +12,21 @@ const Links = ({
   links,
   className,
   iconClassName,
+  secondClassName,
 }: {
   links: LinkItemProps[];
   className?: string;
   iconClassName?: string;
+  secondClassName?: string;
 }) => {
   return (
-    <div className="flex gap-8">
+    <div className={CS("", secondClassName)}>
       {links.map((link) => (
-        <Link
-          key={link.id}
-          to={link.path || "/"}
-          className={CS(
-            "flex items-center gap-2 transition-colors duration-300 hover:text-orange",
-            className
-          )}
-        >
-          {link.icon && <span className={CS(iconClassName)}>{link.icon}</span>}
+        <Link key={link.id} to={link.path || "/"} className={CS("", className)}>
+          {link.icon &&
+            iconClassName?.includes("material-symbols-outlined") && (
+              <span className={CS(iconClassName)}>{link.icon}</span>
+            )}
           {link.name}
         </Link>
       ))}

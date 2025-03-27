@@ -73,7 +73,7 @@ export default function HomePage() {
                             </div>
                             <input type="text" id="search" className="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg w-full ps-10 p-2.5" placeholder="Pretrazi proizvode ili usluge..." required />
                         </div>
-                        <Button type="button" innerText='Filteri' callbackFunction={ToggleFilters} className='flex gap-2 items-center ms-2 text-lg font-medium text-gray-900 border border-gray-900 hover:bg-orange hover:text-white hover:border-white' iconClassName='material-symbols-outlined' icon='tune' />
+                        <Button type="button" innerText='Filteri' onClick={ToggleFilters} className='flex gap-2 items-center ms-2 text-lg font-medium text-gray-900 border border-gray-900 hover:bg-orange hover:text-white hover:border-white' iconClassName='material-symbols-outlined' icon='tune' />
                         <Button type="submit" innerText='Pretraga' className='flex gap-2 items-center ms-2 text-lg font-medium text-white bg-orange border border-orange hover:bg-white hover:text-gray-900 hover:border-gray-900 hover:border' icon='search' iconClassName='material-symbols-outlined' />
                     </form>
 
