@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Button from '../Button';
 
 export default function Filter({ ToggleFunction }: { ToggleFunction: () => void }) {
 
@@ -67,9 +68,7 @@ export default function Filter({ ToggleFunction }: { ToggleFunction: () => void 
         <div className="bg-white p-8 rounded-lg w-[650px]">
             <div className='p-3 flex justify-between'>
                 <span className='text-2xl'>Filter</span>
-                <span className='material-symbols-outlined text-3xl  hover:text-orange cursor-pointer' onClick={ToggleFunction}>
-                    cancel
-                </span>
+                <Button icon='cancel' iconClassName='material-symbols-outlined text-3xl' className=' hover:text-orange p-0' callbackFunction={ToggleFunction} />
             </div>
             <hr className='my-5' />
             <label className="block mb-3 font-semibold">Cena</label>
@@ -154,12 +153,8 @@ export default function Filter({ ToggleFunction }: { ToggleFunction: () => void 
             </div>
 
             <div className="flex justify-between mt-4">
-                <button onClick={resetFilters} className="border p-2 rounded">
-                    Resetuj
-                </button>
-                <button onClick={ToggleFunction} className="p-2 bg-blue-500 text-white rounded">
-                    Pretrazi
-                </button>
+                <Button innerText='Resetuj' callbackFunction={resetFilters} className='border border-black font-semibold hover:bg-orange hover:text-white hover:border-orange' />
+                <Button innerText='Pretrazi' callbackFunction={ToggleFunction} className='border border-orange text-white bg-orange font-semibold hover:bg-white hover:text-black hover:border-black' />
             </div>
         </div>
 

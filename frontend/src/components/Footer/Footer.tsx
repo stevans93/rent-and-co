@@ -1,4 +1,4 @@
-import FooterSocialBadge from "./FooterSocialBadge"
+import Button from "../Button"
 
 export default function Footer() {
 
@@ -66,10 +66,10 @@ export default function Footer() {
                         <div className="flex flex-col gap-2">
                             <span className="font-semibold">Pratite nas na drustvenim mrezama</span>
                             <div className="flex gap-5">
-                                <FooterSocialBadge link={"#"} icon={"fa-facebook"} />
-                                <FooterSocialBadge link={"#"} icon={"fa-x-twitter"} />
-                                <FooterSocialBadge link={"#"} icon={"fa-instagram"} />
-                                <FooterSocialBadge link={"#"} icon={"fa-linkedin-in"} />
+                                <Button link="#" className="fa-brands fa-facebook transition-colors duration-300 hover:bg-orange" />
+                                <Button link="#" className="fa-brands fa-x-twitter transition-colors duration-300 hover:bg-orange" />
+                                <Button link="#" className="fa-brands fa-instagram transition-colors duration-300 hover:bg-orange" />
+                                <Button link="#" className="fa-brands fa-linkedin-in transition-colors duration-300 hover:bg-orange" />
                             </div>
                         </div>
                     </div>

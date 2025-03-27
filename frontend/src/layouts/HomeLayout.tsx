@@ -5,8 +5,8 @@ export default function HomeLayout() {
   return (
     <div className="h-screen flex flex-col">
       <Navbar />
-      {/* <Outlet /> */}
-      {/* <Footer /> */}
+      <Outlet />
+      <Footer />
     </div>
   );
 }
