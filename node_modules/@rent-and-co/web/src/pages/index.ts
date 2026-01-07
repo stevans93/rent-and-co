@@ -1,0 +1,10 @@
+export { default as HomePage } from './HomePage';
+export { default as CategoriesPage } from './CategoriesPage';
+export { default as SearchPage } from './SearchPage';
+export { default as ResourceDetailPage } from './ResourceDetailPage';
+export { default as AboutPage } from './AboutPage';
+export { default as ContactPage } from './ContactPage';
+export { default as LoginPage } from './LoginPage';
+export { default as RegisterPage } from './RegisterPage';
+export { default as FavoritesPage } from './FavoritesPage';
+export { default as CreateResourcePage } from './CreateResourcePage';

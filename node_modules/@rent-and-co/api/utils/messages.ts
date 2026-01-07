@@ -1,0 +1,18 @@
+export enum ErrorMessages {
+  UserAlreadyExists = "User Already Exists",
+  TokenExpired = "Token Expired",
+  UserNotExists = "User Not Exists",
+  PasswordNotValid = "Password Not Valid",
+  UserNotFound = "User Not Found",
+  TokenNotExist = "Token Not Exist",
+  TokenNotProvided = "Token Not Provided",
+  InvalidToken = "Invalid Token",
+  EventNotExists = "Event Not Exists",
+  EventNotFound = "Event Not Found",
+  EmailNotValid = "Email Not Valid",
+  EmailRequired = "Email Required",
+  PasswordLength = "Password Length",
+  PasswordIsRequired = "Password Is Required",
+  FirstNameRequired = "First Name Required",
+  LastNameRequired = "Last Name Required",
+}

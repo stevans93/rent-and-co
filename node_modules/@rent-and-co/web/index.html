@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Rent & Co - Iznajmite bilo šta, bilo kada</title>
+    <meta name="title" content="Rent & Co - Iznajmite bilo šta, bilo kada" />
+    <meta name="description" content="Platforma za iznajmljivanje resursa. Pronađite ili oglašajte alat, opremu, vozila, prostor i još mnogo toga." />
+    <meta name="keywords" content="iznajmljivanje, rent, alat, oprema, vozila, prostor, najam" />
+    <meta name="author" content="Rent & Co" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rentco.rs/" />
+    <meta property="og:title" content="Rent & Co - Iznajmite bilo šta, bilo kada" />
+    <meta property="og:description" content="Platforma za iznajmljivanje resursa. Pronađite ili oglašajte alat, opremu, vozila, prostor." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:locale" content="sr_RS" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://rentco.rs/" />
+    <meta property="twitter:title" content="Rent & Co - Iznajmite bilo šta, bilo kada" />
+    <meta property="twitter:description" content="Platforma za iznajmljivanje resursa. Pronađite ili oglašajte alat, opremu, vozila, prostor." />
+    <meta property="twitter:image" content="/og-image.png" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#3B82F6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Rent & Co" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- DNS Prefetch for API -->
+    <link rel="dns-prefetch" href="//api.rentco.rs" />
+    
+    <!-- Security Headers (Cloudflare will handle most, but good for fallback) -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 20px; text-align: center;">
+        <h1>Rent & Co</h1>
+        <p>Za korišćenje ove aplikacije potreban je JavaScript.</p>
+        <p>Molimo omogućite JavaScript u vašem pretraživaču.</p>
+      </div>
+    </noscript>
+  </body>
+</html>
