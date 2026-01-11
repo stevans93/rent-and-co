@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useLanguage } from '../context';
+import { useLanguage, useTheme } from '../context';
+import { SEO, SEOConfigs } from '../components/SEO';
 import type { Category } from '../types';
 
 // Kategorije slike - fallback ako nema coverImage
@@ -24,8 +25,14 @@ const fallbackCategories: Category[] = [
 
 export default function CategoriesPage() {
   const { t } = useLanguage();
+  const { isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Dynamic hero images based on theme
+  const heroImage = isDark
+    ? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920'
+    : 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920';
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -67,13 +74,20 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold">{t.categories.title}</h1>
-          <p className="text-gray-500">{t.categories.breadcrumb}</p>
+      <SEO {...SEOConfigs.categories} />
+      
+      {/* Hero */}
+      <section
+        className="relative h-64 bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("${heroImage}")`,
+        }}
+      >
+        <div className="container mx-auto px-4 h-full flex flex-col justify-center">
+          <h1 className="text-3xl font-bold text-white">{t.categories.title}</h1>
+          <p className="text-gray-200">{t.categories.breadcrumb}</p>
         </div>
-      </div>
+      </section>
 
       {/* Categories Grid */}
       <section className="py-12 container mx-auto px-4">
@@ -82,12 +96,12 @@ export default function CategoriesPage() {
             <a
               key={category.id}
               href={`/search?category=${category.slug}`}
-              className="relative rounded-xl overflow-hidden h-64 group"
+              className="relative rounded-xl overflow-hidden h-64 group shadow-sm hover:shadow-lg transition-shadow"
             >
               <img
                 src={category.coverImage || categoryImages[category.slug] || categoryImages['razno']}
                 alt={category.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 dark-image"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">

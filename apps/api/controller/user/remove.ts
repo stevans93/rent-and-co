@@ -4,7 +4,7 @@ import { removeService } from "../../services/user/remove";
 export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const removeRequest = await removeService(id);
+  const removeRequest = await removeService(id as string);
 
   res.status(200).json(removeRequest);
 };

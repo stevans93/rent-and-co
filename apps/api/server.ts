@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import path from "path";
 import apiRoutes from "./routes/index";
 import { errorHandler, notFoundHandler } from "./middleware";
 import { DB_URL, PORT, CORS_OPTIONS, NODE_ENV } from "./config/config";
@@ -19,6 +20,9 @@ server.use(
 // Body parsing
 server.use(express.json({ limit: "10mb" }));
 server.use(express.urlencoded({ extended: true }));
+
+// Static files - serve uploaded images
+server.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Security headers (basic, without helmet for now)
 server.use((req, res, next) => {

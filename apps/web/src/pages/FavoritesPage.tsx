@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context';
 import { ResourceCard, Button, Resource } from '../components';
+import { SEO, SEOConfigs } from '../components/SEO';
 
 export default function FavoritesPage() {
   const { t } = useLanguage();
@@ -18,6 +19,8 @@ export default function FavoritesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO {...SEOConfigs.favorites} />
+      
       <h1 className="text-3xl font-bold mb-2">{t.favorites.title}</h1>
       <p className="text-gray-500 mb-8">{t.favorites.breadcrumb}</p>
 

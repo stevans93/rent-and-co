@@ -11,12 +11,12 @@ export default function CategoryCard({ id, name, count, icon }: CategoryCardProp
   return (
     <Link
       to={`/categories/${id}`}
-      className="bg-white border rounded-xl p-6 text-center hover:shadow-lg transition-shadow block"
+      className="bg-white dark:bg-[#1e1e2e] border border-gray-100 dark:border-white/5 rounded-xl p-6 text-center hover:shadow-lg transition-shadow block"
     >
-      <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+      <div className="w-14 h-14 bg-[#e85d45]/10 rounded-xl mx-auto mb-4 flex items-center justify-center">
         {icon || (
           <svg
-            className="w-6 h-6 text-gray-400"
+            className="w-7 h-7 text-[#e85d45]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -30,8 +30,8 @@ export default function CategoryCard({ id, name, count, icon }: CategoryCardProp
           </svg>
         )}
       </div>
-      <h3 className="font-medium">{name}</h3>
-      <p className="text-sm text-gray-500">{count} resursa</p>
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{name}</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{count} resursa</p>
     </Link>
   );
 }

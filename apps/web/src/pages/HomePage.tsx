@@ -1,8 +1,10 @@
-import { useLanguage } from '../context';
+import { useLanguage, useTheme } from '../context';
 import { SearchBar, ResourceCard, CategoryCard, SectionHeader, Resource } from '../components';
+import { SEO, SEOConfigs } from '../components/SEO';
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const { isDark } = useTheme();
 
   // Mock data - later will come from API
   const categories = Array.from({ length: 6 }, (_, i) => ({
@@ -20,14 +22,20 @@ export default function HomePage() {
     isFeatured: true,
   }));
 
+  // Different hero images for light/dark mode
+  const heroImage = isDark 
+    ? 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' // Night city
+    : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'; // Day house
+
   return (
     <div>
+      <SEO {...SEOConfigs.home} />
+      
       {/* Hero Section */}
       <section
         className="relative h-[500px] bg-cover bg-center"
         style={{
-          backgroundImage:
-            'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")',
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("${heroImage}")`,
         }}
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-center items-center text-center text-white">
@@ -59,7 +67,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Resources Section */}
-      <section className="py-16 bg-gray-100">
+      <section className="py-16 bg-gray-100 dark:bg-transparent">
         <div className="container mx-auto px-4">
           <SectionHeader
             title={t.home.featuredResources}
@@ -76,17 +84,17 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-100">
+      <section className="py-16 bg-gray-100 dark:bg-transparent">
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="bg-white dark:bg-[#1e1e2e] rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center border border-transparent dark:border-white/5">
             <div>
-              <h2 className="text-2xl font-bold mb-2">{t.home.whatIsLoremIpsum}</h2>
-              <p className="text-gray-500">{t.home.heroSubtitle}</p>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{t.home.whatIsLoremIpsum}</h2>
+              <p className="text-gray-500 dark:text-gray-400">{t.home.heroSubtitle}</p>
             </div>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a
                 href="/create"
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
+                className="border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 inline-flex items-center gap-2"
               >
                 <span>{t.nav.addProduct}</span>
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +103,7 @@ export default function HomePage() {
               </a>
               <a
                 href="/contact"
-                className="bg-[#1a1a1a] text-white px-6 py-3 rounded-lg hover:bg-gray-800"
+                className="bg-[#1a1a1a] dark:bg-[#e85d45] text-white px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-[#d14d35]"
               >
                 {t.home.becomePartner}
               </a>

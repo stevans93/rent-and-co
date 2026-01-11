@@ -50,3 +50,13 @@ export class ServerError extends Error {
     Object.setPrototypeOf(this, ServerError.prototype);
   }
 }
+
+export class ForbiddenError extends Error {
+  statusCode: number;
+
+  constructor(message?: string) {
+    super(message);
+    this.statusCode = 403;
+    Object.setPrototypeOf(this, ForbiddenError.prototype);
+  }
+}

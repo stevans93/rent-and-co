@@ -17,21 +17,22 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label className="block text-sm font-medium mb-2">{label}</label>
+          <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white">{label}</label>
         )}
         <select
           ref={ref}
           className={`
-            border rounded-lg px-3 py-2 text-sm outline-none transition-colors
-            focus:border-[#e85d45] focus:ring-1 focus:ring-[#e85d45]
-            ${error ? 'border-red-500' : 'border-gray-300'}
+            border rounded-xl px-3 py-2.5 text-sm outline-none transition-all duration-300
+            focus:border-[#e85d45] focus:ring-2 focus:ring-[#e85d45]/20
+            bg-white dark:bg-[#1e1e2e] text-gray-900 dark:text-white
+            ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${fullWidth ? 'w-full' : ''}
             ${className}
           `}
           {...props}
         >
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} className="dark:bg-[#1e1e2e]">
               {option.label}
             </option>
           ))}

@@ -6,7 +6,13 @@ import {
   updateResource,
   deleteResource,
 } from "../controller/resource";
-import { auth, validateBody, validateQuery, promiseWrapper } from "../middleware";
+import {
+  uploadResourceImages,
+  deleteResourceImage,
+  updateResourceImage,
+  reorderResourceImages,
+} from "../controller/resource/images";
+import { auth, validateBody, validateQuery, promiseWrapper, upload } from "../middleware";
 import { createResourceSchema, updateResourceSchema, resourceQuerySchema } from "@rent-and-co/shared";
 
 const router = Router();
@@ -25,5 +31,21 @@ router.patch("/:id", auth, validateBody(updateResourceSchema), promiseWrapper(up
 
 // DELETE /api/resources/:id - Brisanje (auth required, owner only)
 router.delete("/:id", auth, promiseWrapper(deleteResource));
+
+// ==========================================
+// Image Routes
+// ==========================================
+
+// POST /api/resources/:id/images - Upload images
+router.post("/:id/images", auth, upload.array("images", 10), promiseWrapper(uploadResourceImages));
+
+// DELETE /api/resources/:id/images/:imageIndex - Delete image
+router.delete("/:id/images/:imageIndex", auth, promiseWrapper(deleteResourceImage));
+
+// PATCH /api/resources/:id/images/:imageIndex - Update image (alt, order)
+router.patch("/:id/images/:imageIndex", auth, promiseWrapper(updateResourceImage));
+
+// PUT /api/resources/:id/images/reorder - Reorder images
+router.put("/:id/images/reorder", auth, promiseWrapper(reorderResourceImages));
 
 export default router;

@@ -18,8 +18,8 @@ export default function SectionHeader({
   return (
     <div className={`flex justify-between items-center mb-8 ${className}`}>
       <div>
-        <h2 className="text-2xl font-bold">{title}</h2>
-        {subtitle && <p className="text-gray-500">{subtitle}</p>}
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
+        {subtitle && <p className="text-gray-500 dark:text-gray-400">{subtitle}</p>}
       </div>
       {linkText && linkTo && (
         <Link

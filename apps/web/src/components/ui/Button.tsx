@@ -11,10 +11,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-[#e85d45] text-white hover:bg-[#d54d35]',
-  secondary: 'bg-[#1a1a1a] text-white hover:bg-gray-800',
-  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
-  ghost: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
+  primary: 'bg-primary text-white hover:bg-primary-hover shadow-lg hover:shadow-primary/25 hover:shadow-xl',
+  secondary: 'bg-[#1a1a1a] dark:bg-white/10 text-white hover:bg-gray-800 dark:hover:bg-white/20',
+  outline: 'border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5',
+  ghost: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -42,7 +42,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={`
-          inline-flex items-center justify-center rounded-lg font-medium transition-colors
+          inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300
           disabled:opacity-50 disabled:cursor-not-allowed
           ${variantStyles[variant]}
           ${sizeStyles[size]}

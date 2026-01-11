@@ -42,7 +42,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 border dark:border-dark-border rounded hover:bg-gray-100 dark:hover:bg-dark-light disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 transition-colors"
         >
           ←
         </button>
@@ -55,27 +55,27 @@ export default function Pagination({
               className={`px-3 py-1 rounded transition-colors ${
                 page === currentPage
                   ? 'bg-[#e85d45] text-white'
-                  : 'border hover:bg-gray-100'
+                  : 'border dark:border-dark-border hover:bg-gray-100 dark:hover:bg-dark-light text-gray-700 dark:text-gray-300'
               }`}
             >
               {page}
             </button>
           ) : (
-            <span key={index} className="px-2">...</span>
+            <span key={index} className="px-2 text-gray-500 dark:text-gray-400">...</span>
           )
         ))}
         
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 border dark:border-dark-border rounded hover:bg-gray-100 dark:hover:bg-dark-light disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 transition-colors"
         >
           →
         </button>
       </div>
       
       {totalResults && (
-        <p className="text-center text-gray-500 text-sm">
+        <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
           {startResult} - {endResult} of {totalResults}+ results
         </p>
       )}
