@@ -59,7 +59,7 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {contactCards.map((card, i) => (
-            <div key={i} className="text-center p-8 bg-white dark:bg-[#1e1e2e] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm">
+            <div key={i} className="text-center p-8 bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm">
               <div className="text-5xl mb-4">{card.icon}</div>
               <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">{card.title}</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{card.description}</p>
@@ -77,7 +77,7 @@ export default function ContactPage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Form */}
-            <div className="bg-white dark:bg-[#1e1e2e] rounded-xl p-8 shadow-sm">
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-8 shadow-sm">
               <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{t.home.whatIsLoremIpsum}</h2>
               <form className="space-y-4">
                 <div>

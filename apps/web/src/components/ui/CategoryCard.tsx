@@ -11,7 +11,7 @@ export default function CategoryCard({ id, name, count, icon }: CategoryCardProp
   return (
     <Link
       to={`/categories/${id}`}
-      className="bg-white dark:bg-[#1e1e2e] border border-gray-100 dark:border-white/5 rounded-xl p-6 text-center hover:shadow-lg transition-shadow block"
+      className="bg-white dark:bg-[#1e1e1e] border border-gray-100 dark:border-white/5 rounded-xl p-6 text-center hover:shadow-lg transition-shadow block"
     >
       <div className="w-14 h-14 bg-[#e85d45]/10 rounded-xl mx-auto mb-4 flex items-center justify-center">
         {icon || (

@@ -5,6 +5,7 @@ import { HelmetProvider as HelmetProviderComponent } from 'react-helmet-async';
 import { Layout } from './components/layout';
 import { LanguageProvider, ThemeProvider, AuthProvider } from './context';
 import { OrganizationSchema, WebSiteSchema } from './components/SchemaOrg';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Workaround for React 18 type compatibility
 const HelmetProvider = HelmetProviderComponent as any;
@@ -31,6 +32,18 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
 const CreateResourcePage = lazy(() => import('./pages/CreateResourcePage'));
+
+// Dashboard pages
+const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
+const DashboardOverview = lazy(() => import('./pages/dashboard/DashboardOverview'));
+const MyListings = lazy(() => import('./pages/dashboard/MyListings'));
+const AddListing = lazy(() => import('./pages/dashboard/AddListing'));
+const DashboardSettings = lazy(() => import('./pages/dashboard/DashboardSettings'));
+const DashboardAnalytics = lazy(() => import('./pages/dashboard/DashboardAnalytics'));
+const DashboardPayments = lazy(() => import('./pages/dashboard/DashboardPayments'));
+const DashboardHelp = lazy(() => import('./pages/dashboard/DashboardHelp'));
+const AdminUsers = lazy(() => import('./pages/dashboard/AdminUsers'));
+const AdminAllListings = lazy(() => import('./pages/dashboard/AdminAllListings'));
 
 // Loading component
 const PageLoader = () => (
@@ -104,6 +117,66 @@ function App() {
                   <Suspense fallback={<PageLoader />}>
                     <CreateResourcePage />
                   </Suspense>
+                } />
+              </Route>
+              
+              {/* Dashboard Routes - Protected */}
+              <Route path="dashboard" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardLayout />
+                  </Suspense>
+                </ProtectedRoute>
+              }>
+                <Route index element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardOverview />
+                  </Suspense>
+                } />
+                <Route path="my-listings" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <MyListings />
+                  </Suspense>
+                } />
+                <Route path="add-listing" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AddListing />
+                  </Suspense>
+                } />
+                <Route path="analytics" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardAnalytics />
+                  </Suspense>
+                } />
+                <Route path="payments" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardPayments />
+                  </Suspense>
+                } />
+                <Route path="settings" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardSettings />
+                  </Suspense>
+                } />
+                <Route path="help" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DashboardHelp />
+                  </Suspense>
+                } />
+                {/* Admin Routes */}
+                <Route path="users" element={
+                  <ProtectedRoute requireAdmin>
+                    <Suspense fallback={<PageLoader />}>
+                      <AdminUsers />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="all-listings" element={
+                  <ProtectedRoute requireAdmin>
+                    <Suspense fallback={<PageLoader />}>
+                      <AdminAllListings />
+                    </Suspense>
+                  </ProtectedRoute>
                 } />
               </Route>
             </Routes>

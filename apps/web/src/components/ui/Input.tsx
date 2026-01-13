@@ -18,7 +18,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           className={`
             border rounded-xl px-4 py-3 outline-none transition-all duration-300
             focus:border-[#e85d45] focus:ring-2 focus:ring-[#e85d45]/20
-            bg-white dark:bg-[#1e1e2e] text-gray-900 dark:text-white
+            bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white
             placeholder-gray-400 dark:placeholder-gray-500
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${fullWidth ? 'w-full' : ''}

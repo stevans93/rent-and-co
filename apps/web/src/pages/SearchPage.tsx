@@ -1,4 +1,4 @@
-Ôªøimport { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context';
 import { useResources, useCategories, useDebounce } from '../hooks';
@@ -9,7 +9,7 @@ import { SEO, SEOConfigs } from '../components/SEO';
 
 function ResourceCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-[#1e1e2e] rounded-xl overflow-hidden shadow-sm animate-pulse">
+    <div className="bg-white dark:bg-[#1e1e1e] rounded-xl overflow-hidden shadow-sm animate-pulse">
       <div className="aspect-[4/3] bg-gray-200 dark:bg-gray-700"></div>
       <div className="p-4">
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
@@ -88,12 +88,12 @@ function FilterDrawer({ isOpen, onClose, children }: FilterDrawerProps) {
       
       {/* Drawer */}
       <div 
-        className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-[#1e1e2e] z-50 lg:hidden shadow-xl transform transition-transform duration-300 ease-in-out overflow-y-auto"
+        className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-[#1e1e1e] z-50 lg:hidden shadow-xl transform transition-transform duration-300 ease-in-out overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="filter-drawer-title"
       >
-        <div className="sticky top-0 bg-white dark:bg-[#1e1e2e] border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
+        <div className="sticky top-0 bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
           <h2 id="filter-drawer-title" className="text-lg font-semibold text-gray-900 dark:text-white">Filteri</h2>
           <button
             onClick={onClose}
@@ -150,7 +150,7 @@ function FiltersContent({
     { value: '', label: t.search.allCities },
     { value: 'Beograd', label: 'Beograd' },
     { value: 'Novi Sad', label: 'Novi Sad' },
-    { value: 'Ni≈°', label: 'Ni≈°' },
+    { value: 'Niö', label: 'Niö' },
     { value: 'Kragujevac', label: 'Kragujevac' },
     { value: 'Subotica', label: 'Subotica' },
   ];
@@ -159,7 +159,7 @@ function FiltersContent({
     { value: '', label: 'Svi statusi' },
     { value: 'available', label: 'Dostupno' },
     { value: 'rented', label: 'Iznajmljeno' },
-    { value: 'maintenance', label: 'Na odr≈æavanju' },
+    { value: 'maintenance', label: 'Na odrûavanju' },
   ];
 
   const categoryOptions = [
@@ -217,15 +217,15 @@ function FiltersContent({
         <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">{t.search.price}</h3>
         <div className="flex items-center gap-2">
           <Input 
-            placeholder="‚Ç¨0" 
+            placeholder="Ä0" 
             value={filters.minPrice}
             onChange={(e) => onFilterChange('minPrice', e.target.value)}
             className="!py-2 text-sm" 
             type="number"
           />
-          <span className="text-gray-400">‚Äî</span>
+          <span className="text-gray-400">ó</span>
           <Input 
-            placeholder="‚Ç¨1000" 
+            placeholder="Ä1000" 
             value={filters.maxPrice}
             onChange={(e) => onFilterChange('maxPrice', e.target.value)}
             className="!py-2 text-sm" 
@@ -394,12 +394,12 @@ export default function SearchPage() {
     const searchToSave = {
       id: Date.now(),
       filters,
-      name: filters.q || categoryName || 'Saƒçuvana pretraga',
+      name: filters.q || categoryName || 'Sacuvana pretraga',
       date: new Date().toISOString(),
     };
     savedSearches.push(searchToSave);
     localStorage.setItem('savedSearches', JSON.stringify(savedSearches.slice(-10))); // Keep last 10
-    alert('Pretraga je saƒçuvana!');
+    alert('Pretraga je sacuvana!');
   }, [filters, categoryName]);
 
   const sortOptions = [
@@ -455,7 +455,7 @@ export default function SearchPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="bg-white dark:bg-[#1e1e2e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border border-transparent dark:border-white/5 sticky top-20">
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border border-transparent dark:border-white/5 sticky top-20">
               <FiltersContent
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -514,8 +514,8 @@ export default function SearchPage() {
                 <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Gre≈°ka pri uƒçitavanju</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Poku≈°ajte ponovo.'}</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Greöka pri ucitavanju</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Pokuöajte ponovo.'}</p>
               </div>
             )}
 
@@ -535,7 +535,7 @@ export default function SearchPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.common.noResults}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Poku≈°ajte sa drugim filterima ili pretragom.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Pokuöajte sa drugim filterima ili pretragom.</p>
                 <Button variant="outline" onClick={handleReset}>
                   Resetuj filtere
                 </Button>

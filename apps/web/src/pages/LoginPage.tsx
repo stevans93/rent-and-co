@@ -15,8 +15,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get redirect path from state or default to home
-  const from = (location.state as { from?: string })?.from || '/';
+  // Get redirect path from state or default to dashboard
+  const from = (location.state as { from?: string })?.from || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

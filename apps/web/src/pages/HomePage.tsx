@@ -86,7 +86,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-16 bg-gray-100 dark:bg-transparent">
         <div className="container mx-auto px-4">
-          <div className="bg-white dark:bg-[#1e1e2e] rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center border border-transparent dark:border-white/5">
+          <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center border border-transparent dark:border-white/5">
             <div>
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{t.home.whatIsLoremIpsum}</h2>
               <p className="text-gray-500 dark:text-gray-400">{t.home.heroSubtitle}</p>

@@ -5,6 +5,9 @@ import {
   createResource,
   updateResource,
   deleteResource,
+  getMyResources,
+  getAdminResources,
+  updateResourceStatus,
 } from "../controller/resource";
 import {
   uploadResourceImages,
@@ -20,6 +23,12 @@ const router = Router();
 // GET /api/resources - Lista sa filterima
 router.get("/", validateQuery(resourceQuerySchema), promiseWrapper(getResources));
 
+// GET /api/resources/my - Moji resursi (auth required) - MORA BITI PRE /:slug
+router.get("/my", auth, promiseWrapper(getMyResources));
+
+// GET /api/resources/admin - Admin lista svih resursa (auth + admin required)
+router.get("/admin", auth, promiseWrapper(getAdminResources));
+
 // GET /api/resources/:slug - Detalji po slug-u
 router.get("/:slug", promiseWrapper(getResourceBySlug));
 
@@ -28,6 +37,9 @@ router.post("/", auth, validateBody(createResourceSchema), promiseWrapper(create
 
 // PATCH /api/resources/:id - Ažuriranje (auth required, owner only)
 router.patch("/:id", auth, validateBody(updateResourceSchema), promiseWrapper(updateResource));
+
+// PATCH /api/resources/:id/status - Admin promena statusa
+router.patch("/:id/status", auth, promiseWrapper(updateResourceStatus));
 
 // DELETE /api/resources/:id - Brisanje (auth required, owner only)
 router.delete("/:id", auth, promiseWrapper(deleteResource));

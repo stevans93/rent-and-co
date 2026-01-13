@@ -283,3 +283,225 @@ export const deleteResource = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+/**
+ * GET /api/resources/my
+ * Lista resursa trenutno ulogovanog korisnika
+ */
+export const getMyResources = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new NotFoundError("Korisnik nije pronađen");
+    }
+
+    const {
+      status,
+      sort = "newest",
+      page = "1",
+      limit = "20",
+    } = req.query as { status?: string; sort?: string; page?: string; limit?: string };
+
+    // Build filter - always filter by current user
+    const filter: any = { ownerId: req.user._id };
+
+    // Status filter (optional)
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Sorting
+    let sortOption: any = { createdAt: -1 };
+    switch (sort) {
+      case "price_asc":
+        sortOption = { pricePerDay: 1 };
+        break;
+      case "price_desc":
+        sortOption = { pricePerDay: -1 };
+        break;
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+      case "popular":
+        sortOption = { views: -1 };
+        break;
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Execute query
+    const [resources, total, stats] = await Promise.all([
+      Resource.find(filter)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limitNum)
+        .populate("categoryId", "name slug icon")
+        .lean(),
+      Resource.countDocuments(filter),
+      Resource.aggregate([
+        { $match: { ownerId: req.user._id } },
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            totalViews: { $sum: "$views" },
+            totalFavorites: { $sum: "$favorites" },
+          },
+        },
+      ]),
+    ]);
+
+    // Calculate stats by status
+    const statusStats = stats.reduce((acc: any, item: any) => {
+      acc[item._id] = {
+        count: item.count,
+        views: item.totalViews,
+        favorites: item.totalFavorites,
+      };
+      return acc;
+    }, {});
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.status(200).json({
+      success: true,
+      data: resources,
+      stats: {
+        total,
+        active: statusStats.active?.count || 0,
+        pending: statusStats.pending?.count || 0,
+        rejected: statusStats.rejected?.count || 0,
+        totalViews: Object.values(statusStats).reduce((sum: number, s: any) => sum + (s.views || 0), 0),
+        totalFavorites: Object.values(statusStats).reduce((sum: number, s: any) => sum + (s.favorites || 0), 0),
+      },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: totalPages,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/resources/admin
+ * Admin - Lista svih resursa
+ */
+export const getAdminResources = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: "Nemate dozvolu za ovu akciju",
+      });
+      return;
+    }
+
+    const {
+      status,
+      sort = "newest",
+      page = "1",
+      limit = "50",
+    } = req.query as { status?: string; sort?: string; page?: string; limit?: string };
+
+    // Build filter
+    const filter: any = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Sorting
+    let sortOption: any = { createdAt: -1 };
+    switch (sort) {
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+      case "views":
+        sortOption = { views: -1 };
+        break;
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [resources, total] = await Promise.all([
+      Resource.find(filter)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limitNum)
+        .populate("categoryId", "name slug")
+        .populate("ownerId", "firstName lastName email")
+        .lean(),
+      Resource.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.status(200).json({
+      success: true,
+      data: resources,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: totalPages,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/resources/:id/status
+ * Admin - Promena statusa resursa
+ */
+export const updateResourceStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: "Nemate dozvolu za ovu akciju",
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const { status, reason } = req.body;
+
+    const resource = await Resource.findByIdAndUpdate(
+      id,
+      { 
+        status, 
+        ...(reason && { rejectionReason: reason }),
+      },
+      { new: true }
+    );
+
+    if (!resource) {
+      throw new NotFoundError("Resurs nije pronađen");
+    }
+
+    res.status(200).json({
+      success: true,
+      data: resource,
+      message: `Status resursa je promenjen u ${status}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

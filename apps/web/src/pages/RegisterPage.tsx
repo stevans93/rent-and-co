@@ -38,7 +38,7 @@ export default function RegisterPage() {
     const result = await register(formData);
     
     if (result.success) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } else {
       setError(result.message || 'Greška pri registraciji');
     }

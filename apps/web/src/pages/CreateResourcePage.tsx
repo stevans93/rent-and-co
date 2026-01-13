@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +10,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Form validation schema based on shared schema
 const createResourceFormSchema = z.object({
-  title: z.string().min(5, 'Naslov mora imati najmanje 5 karaktera').max(100, 'Naslov može imati maksimalno 100 karaktera'),
-  description: z.string().min(20, 'Opis mora imati najmanje 20 karaktera').max(5000, 'Opis može imati maksimalno 5000 karaktera'),
+  title: z.string().min(5, 'Naslov mora imati najmanje 5 karaktera').max(100, 'Naslov mo�e imati maksimalno 100 karaktera'),
+  description: z.string().min(20, 'Opis mora imati najmanje 20 karaktera').max(5000, 'Opis mo�e imati maksimalno 5000 karaktera'),
   categoryId: z.string().min(1, 'Kategorija je obavezna'),
   pricePerDay: z.coerce.number().positive('Cena mora biti pozitivan broj'),
   currency: z.enum(['EUR', 'RSD', 'USD']),
@@ -49,7 +49,7 @@ interface Category {
 // Common options for resources
 const COMMON_OPTIONS = [
   'WiFi', 'Parking', 'Klima', 'Grejanje', 'Osiguranje', 
-  'Dostava', 'Non-stop', 'Vikend', 'Dugoročno', 'Kratkoročno'
+  'Dostava', 'Non-stop', 'Vikend', 'Dugorocno', 'Kratkorocno'
 ];
 
 export default function CreateResourcePage() {
@@ -161,7 +161,7 @@ export default function CreateResourcePage() {
     const newImages: ImageFile[] = imageFiles.map((file, index) => ({
       file,
       url: '',
-      alt: title ? `${title} — fotografija` : 'fotografija',
+      alt: title ? `${title} � fotografija` : 'fotografija',
       order: images.length + index,
       preview: URL.createObjectURL(file),
     }));
@@ -246,7 +246,7 @@ export default function CreateResourcePage() {
       const createResult = await createResponse.json();
 
       if (!createResult.success) {
-        throw new Error(createResult.message || 'Greška pri kreiranju oglasa');
+        throw new Error(createResult.message || 'Gre�ka pri kreiranju oglasa');
       }
 
       const resourceId = createResult.data._id;
@@ -281,7 +281,7 @@ export default function CreateResourcePage() {
       navigate(`/resources/${resourceSlug}`);
     } catch (error) {
       console.error('Submit error:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Greška pri kreiranju oglasa');
+      setSubmitError(error instanceof Error ? error.message : 'Gre�ka pri kreiranju oglasa');
     } finally {
       setIsSubmitting(false);
     }
@@ -441,8 +441,8 @@ export default function CreateResourcePage() {
                         {...register('currency')}
                         className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-4 py-3 bg-white dark:bg-dark-light text-gray-900 dark:text-white"
                       >
-                        <option value="EUR">EUR (€)</option>
-                        <option value="RSD">RSD (дин)</option>
+                        <option value="EUR">EUR (�)</option>
+                        <option value="RSD">RSD (???)</option>
                         <option value="USD">USD ($)</option>
                       </select>
                     </div>
@@ -457,7 +457,7 @@ export default function CreateResourcePage() {
                       {...register('status')}
                       className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-4 py-3 bg-white dark:bg-dark-light text-gray-900 dark:text-white"
                     >
-                      <option value="pending">Na čekanju</option>
+                      <option value="pending">Na cekanju</option>
                       <option value="active">Aktivan</option>
                       <option value="inactive">Neaktivan</option>
                     </select>
@@ -565,7 +565,7 @@ export default function CreateResourcePage() {
                               type="button"
                               onClick={() => removeImage(index)}
                               className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                              title="Obriši"
+                              title="Obri�i"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -584,7 +584,7 @@ export default function CreateResourcePage() {
                       ))}
                     </div>
                     <p className="text-sm text-gray-500 mt-2">
-                      💡 Prevucite slike da ih preuredite. Prva slika će biti glavna.
+                      ?? Prevucite slike da ih preuredite. Prva slika ce biti glavna.
                     </p>
                   </div>
                 )}
@@ -655,7 +655,7 @@ export default function CreateResourcePage() {
                         <input
                           type="text"
                           {...register(`extraInfo.${index}.label`)}
-                          placeholder="Naziv (npr. Težina)"
+                          placeholder="Naziv (npr. Te�ina)"
                           className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 bg-white dark:bg-dark-light text-gray-900 dark:text-white"
                         />
                       </div>
@@ -695,12 +695,12 @@ export default function CreateResourcePage() {
                 <div className="mt-8 p-4 bg-gray-50 dark:bg-dark-light rounded-lg">
                   <h3 className="font-medium mb-2 dark:text-white">Pregled oglasa</h3>
                   <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    <li>📝 Naslov: {watch('title') || '-'}</li>
-                    <li>📂 Kategorija: {categories.find(c => c._id === watch('categoryId'))?.name || '-'}</li>
-                    <li>💰 Cena: {watch('pricePerDay') || 0} {watch('currency')}/dan</li>
-                    <li>📍 Lokacija: {watch('location.city') || '-'}, {watch('location.country')}</li>
-                    <li>🖼 Slike: {images.length}</li>
-                    <li>🏷 Opcije: {selectedOptions.length > 0 ? selectedOptions.join(', ') : '-'}</li>
+                    <li>?? Naslov: {watch('title') || '-'}</li>
+                    <li>?? Kategorija: {categories.find(c => c._id === watch('categoryId'))?.name || '-'}</li>
+                    <li>?? Cena: {watch('pricePerDay') || 0} {watch('currency')}/dan</li>
+                    <li>?? Lokacija: {watch('location.city') || '-'}, {watch('location.country')}</li>
+                    <li>?? Slike: {images.length}</li>
+                    <li>?? Opcije: {selectedOptions.length > 0 ? selectedOptions.join(', ') : '-'}</li>
                   </ul>
                 </div>
               </div>
@@ -761,36 +761,36 @@ export default function CreateResourcePage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-dark-card rounded-xl p-6 shadow-sm dark:border dark:border-dark-border sticky top-24">
-              <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">💡 Saveti</h3>
+              <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">?? Saveti</h3>
               <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
                 {step === 1 && (
                   <>
-                    <p>✓ Napišite jasan i detaljan naslov</p>
-                    <p>✓ Odaberite odgovarajuću kategoriju</p>
-                    <p>✓ Detaljno opišite resurs i sve njegove karakteristike</p>
-                    <p>✓ Postavite konkurentnu cenu</p>
+                    <p>? Napi�ite jasan i detaljan naslov</p>
+                    <p>? Odaberite odgovarajucu kategoriju</p>
+                    <p>? Detaljno opi�ite resurs i sve njegove karakteristike</p>
+                    <p>? Postavite konkurentnu cenu</p>
                   </>
                 )}
                 {step === 2 && (
                   <>
-                    <p>✓ Dodajte kvalitetne fotografije</p>
-                    <p>✓ Prva slika će biti glavna</p>
-                    <p>✓ Fotografišite iz više uglova</p>
-                    <p>✓ Maksimalno 10 slika</p>
+                    <p>? Dodajte kvalitetne fotografije</p>
+                    <p>? Prva slika ce biti glavna</p>
+                    <p>? Fotografi�ite iz vi�e uglova</p>
+                    <p>? Maksimalno 10 slika</p>
                   </>
                 )}
                 {step === 3 && (
                   <>
-                    <p>✓ Tačno navedite lokaciju</p>
-                    <p>✓ Grad je obavezan podatak</p>
-                    <p>✓ Adresa pomaže korisnicima da vas pronađu</p>
+                    <p>? Tacno navedite lokaciju</p>
+                    <p>? Grad je obavezan podatak</p>
+                    <p>? Adresa poma�e korisnicima da vas pronadu</p>
                   </>
                 )}
                 {step === 4 && (
                   <>
-                    <p>✓ Dodajte relevantne dodatne informacije</p>
-                    <p>✓ npr. dimenzije, težina, godina proizvodnje</p>
-                    <p>✓ Pregledajte sve podatke pre objave</p>
+                    <p>? Dodajte relevantne dodatne informacije</p>
+                    <p>? npr. dimenzije, te�ina, godina proizvodnje</p>
+                    <p>? Pregledajte sve podatke pre objave</p>
                   </>
                 )}
               </div>
