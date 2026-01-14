@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -35,6 +35,7 @@ interface PaginationData {
 
 export default function AdminAllListings() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,11 +151,11 @@ export default function AdminAllListings() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'active':
-        return 'Aktivan';
+        return t.dashboard.active;
       case 'pending':
-        return 'Na čekanju';
+        return t.dashboard.pending;
       case 'rejected':
-        return 'Odbijen';
+        return t.dashboard.rejected;
       default:
         return status;
     }
@@ -185,8 +186,8 @@ export default function AdminAllListings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Svi oglasi</h1>
-        <p className="text-gray-500 dark:text-gray-400">Pregledajte i upravljajte svim oglasima na platformi</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.listingsManagement}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.allListings}</p>
       </div>
 
       {/* Stats Cards */}
@@ -199,7 +200,7 @@ export default function AdminAllListings() {
               : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
           }`}
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">Ukupno</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.allStatuses}</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
         </button>
         <button
@@ -210,7 +211,7 @@ export default function AdminAllListings() {
               : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
           }`}
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">Aktivnih</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.active}</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
         </button>
         <button
@@ -221,7 +222,7 @@ export default function AdminAllListings() {
               : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
           }`}
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">Na čekanju</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.pending}</p>
           <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pending}</p>
         </button>
         <button
@@ -232,7 +233,7 @@ export default function AdminAllListings() {
               : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
           }`}
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">Odbijenih</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.rejected}</p>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.rejected}</p>
         </button>
       </div>
@@ -246,7 +247,7 @@ export default function AdminAllListings() {
             </svg>
             <input
               type="text"
-              placeholder="Pretraži oglase po naslovu ili vlasniku..."
+              placeholder={t.dashboard.searchListings}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
@@ -259,9 +260,9 @@ export default function AdminAllListings() {
             onChange={(e) => handlePerPageChange(Number(e.target.value))}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
           >
-            <option value={5}>5 po stranici</option>
-            <option value={10}>10 po stranici</option>
-            <option value={15}>15 po stranici</option>
+            <option value={5}>5 {t.dashboard.perPage}</option>
+            <option value={10}>10 {t.dashboard.perPage}</option>
+            <option value={15}>15 {t.dashboard.perPage}</option>
           </select>
         </div>
       </div>
@@ -272,13 +273,13 @@ export default function AdminAllListings() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Oglas</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Vlasnik</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Cena</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Pregledi</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Datum</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Akcije</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.listing}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.ownerColumn}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.status}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.price}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.viewsCount}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.date}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.actionsColumn}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -335,13 +336,13 @@ export default function AdminAllListings() {
                         }}
                         className="text-[#e85d45] hover:text-[#d54d35] text-sm"
                       >
-                        Status
+                        {t.dashboard.status}
                       </button>
                       <button
                         onClick={() => deleteResource(resource._id)}
                         className="text-red-500 hover:text-red-700 text-sm"
                       >
-                        Obriši
+                        {t.dashboard.delete}
                       </button>
                     </div>
                   </td>
@@ -356,7 +357,7 @@ export default function AdminAllListings() {
             <svg className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <p className="text-gray-500 dark:text-gray-400">Nema pronađenih oglasa</p>
+            <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noListingsFound}</p>
           </div>
         )}
 
@@ -364,7 +365,7 @@ export default function AdminAllListings() {
         {pagination.pages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Prikazano {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, pagination.total)} od {pagination.total}
+              {t.dashboard.showing} {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, pagination.total)} {t.dashboard.of} {pagination.total}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -372,7 +373,7 @@ export default function AdminAllListings() {
                 disabled={currentPage === 1}
                 className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Prethodna
+                {t.dashboard.previous}
               </button>
               {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => {
                 let page;
@@ -404,7 +405,7 @@ export default function AdminAllListings() {
                 disabled={currentPage === pagination.pages}
                 className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Sledeća
+                {t.dashboard.next}
               </button>
             </div>
           </div>
@@ -415,7 +416,7 @@ export default function AdminAllListings() {
       {isModalOpen && selectedResource && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#1e1e1e] rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Promeni status oglasa</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t.dashboard.changeListingStatus}</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{selectedResource.title}</p>
             <div className="space-y-3">
               <button
@@ -426,8 +427,8 @@ export default function AdminAllListings() {
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span className="font-medium text-green-700 dark:text-green-400">Aktiviraj</span>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Oglas će biti vidljiv svima</p>
+                <span className="font-medium text-green-700 dark:text-green-400">{t.dashboard.activate}</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.listingWillBeVisible}</p>
               </button>
               <button
                 onClick={() => updateResourceStatus(selectedResource._id, 'pending')}
@@ -437,12 +438,12 @@ export default function AdminAllListings() {
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span className="font-medium text-yellow-700 dark:text-yellow-400">Na čekanju</span>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Oglas čeka pregled</p>
+                <span className="font-medium text-yellow-700 dark:text-yellow-400">{t.dashboard.pendingReview}</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.listingAwaitingReview}</p>
               </button>
               <button
                 onClick={() => {
-                  const reason = prompt('Razlog odbijanja:');
+                  const reason = prompt(t.dashboard.rejectionReason);
                   if (reason) {
                     updateResourceStatus(selectedResource._id, 'rejected', reason);
                   }
@@ -453,15 +454,15 @@ export default function AdminAllListings() {
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                <span className="font-medium text-red-700 dark:text-red-400">Odbij</span>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Oglas neće biti prikazan</p>
+                <span className="font-medium text-red-700 dark:text-red-400">{t.dashboard.reject}</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.listingWillNotBeShown}</p>
               </button>
             </div>
             <button
               onClick={() => setIsModalOpen(false)}
               className="mt-4 w-full py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
-              Otkaži
+              {t.dashboard.cancel}
             </button>
           </div>
         </div>

@@ -150,7 +150,7 @@ function FiltersContent({
     { value: '', label: t.search.allCities },
     { value: 'Beograd', label: 'Beograd' },
     { value: 'Novi Sad', label: 'Novi Sad' },
-    { value: 'Niš', label: 'Niš' },
+    { value: 'Niï¿½', label: 'Niï¿½' },
     { value: 'Kragujevac', label: 'Kragujevac' },
     { value: 'Subotica', label: 'Subotica' },
   ];
@@ -159,12 +159,15 @@ function FiltersContent({
     { value: '', label: 'Svi statusi' },
     { value: 'available', label: 'Dostupno' },
     { value: 'rented', label: 'Iznajmljeno' },
-    { value: 'maintenance', label: 'Na održavanju' },
+    { value: 'maintenance', label: 'Na odrï¿½avanju' },
   ];
 
   const categoryOptions = [
     { value: '', label: t.search.allCategories || 'Sve kategorije' },
-    ...categories.map(cat => ({ value: cat.slug, label: cat.name })),
+    ...categories.map(cat => {
+      const categoryNames = t.categories as Record<string, string>;
+      return { value: cat.slug, label: categoryNames[cat.slug] || cat.name };
+    }),
   ];
 
   if (isLoadingCategories) {
@@ -217,15 +220,15 @@ function FiltersContent({
         <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">{t.search.price}</h3>
         <div className="flex items-center gap-2">
           <Input 
-            placeholder="€0" 
+            placeholder="ï¿½0" 
             value={filters.minPrice}
             onChange={(e) => onFilterChange('minPrice', e.target.value)}
             className="!py-2 text-sm" 
             type="number"
           />
-          <span className="text-gray-400">—</span>
+          <span className="text-gray-400">ï¿½</span>
           <Input 
-            placeholder="€1000" 
+            placeholder="ï¿½1000" 
             value={filters.maxPrice}
             onChange={(e) => onFilterChange('maxPrice', e.target.value)}
             className="!py-2 text-sm" 
@@ -514,8 +517,8 @@ export default function SearchPage() {
                 <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Greška pri ucitavanju</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Pokušajte ponovo.'}</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Greï¿½ka pri ucitavanju</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Pokuï¿½ajte ponovo.'}</p>
               </div>
             )}
 
@@ -535,7 +538,7 @@ export default function SearchPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.common.noResults}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Pokušajte sa drugim filterima ili pretragom.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Pokuï¿½ajte sa drugim filterima ili pretragom.</p>
                 <Button variant="outline" onClick={handleReset}>
                   Resetuj filtere
                 </Button>

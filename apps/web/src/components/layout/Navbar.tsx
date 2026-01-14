@@ -107,7 +107,6 @@ export default function Navbar() {
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 className="flex items-center text-sm text-gray-300 hover:text-white transition-colors px-2 py-1 border border-gray-600 rounded-lg"
               >
-                <span className="mr-1 leading-none">{currentLang?.flag}</span>
                 <span className="leading-none">{currentLang?.code.toUpperCase()}</span>
                 <svg
                   className={`w-4 h-4 ml-1 transition-transform ${isLangOpen ? 'rotate-180' : ''}`}
@@ -132,7 +131,6 @@ export default function Navbar() {
                         language === lang.code ? 'text-[#e85d45]' : 'text-gray-700'
                       }`}
                     >
-                      <span className="mr-2">{lang.flag}</span>
                       {lang.label}
                     </button>
                   ))}

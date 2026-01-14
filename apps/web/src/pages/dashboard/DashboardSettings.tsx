@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 export default function DashboardSettings() {
   const { user, updateUser, token } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -43,12 +44,12 @@ export default function DashboardSettings() {
 
       if (result.success) {
         updateUser(result.data);
-        setSuccess('Profil uspešno ažuriran');
+        setSuccess(t.dashboard.profileUpdated);
       } else {
-        setError(result.message || 'Greška pri ažuriranju');
+        setError(result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
-      setError('Greška pri povezivanju sa serverom');
+      setError(t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +59,7 @@ export default function DashboardSettings() {
     e.preventDefault();
     
     if (passwords.newPassword !== passwords.confirmPassword) {
-      setError('Lozinke se ne poklapaju');
+      setError(t.dashboard.passwordsNoMatch);
       return;
     }
 
@@ -82,13 +83,13 @@ export default function DashboardSettings() {
       const result = await response.json();
 
       if (result.success) {
-        setSuccess('Lozinka uspešno promenjena');
+        setSuccess(t.dashboard.passwordChanged);
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        setError(result.message || 'Greška pri promeni lozinke');
+        setError(result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
-      setError('Greška pri povezivanju sa serverom');
+      setError(t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +98,7 @@ export default function DashboardSettings() {
   const tabs = [
     { 
       id: 'profile', 
-      label: 'Profil', 
+      label: t.dashboard.profile, 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -106,7 +107,7 @@ export default function DashboardSettings() {
     },
     { 
       id: 'security', 
-      label: 'Sigurnost', 
+      label: t.dashboard.security, 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -115,7 +116,7 @@ export default function DashboardSettings() {
     },
     { 
       id: 'notifications', 
-      label: 'Obaveštenja', 
+      label: t.dashboard.notificationsSettings, 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -128,8 +129,8 @@ export default function DashboardSettings() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Podešavanja</h1>
-        <p className="text-gray-500 dark:text-gray-400">Upravljajte vašim nalogom</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.settings}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.profile}</p>
       </div>
 
       {/* Tabs */}
@@ -165,13 +166,13 @@ export default function DashboardSettings() {
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Informacije o profilu</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t.dashboard.profile}</h2>
           
           <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-xl">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Ime
+                  {t.dashboard.firstName}
                 </label>
                 <input
                   type="text"
@@ -182,7 +183,7 @@ export default function DashboardSettings() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Prezime
+                  {t.dashboard.lastName}
                 </label>
                 <input
                   type="text"
@@ -195,7 +196,7 @@ export default function DashboardSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
+                {t.dashboard.email}
               </label>
               <input
                 type="email"
@@ -207,7 +208,7 @@ export default function DashboardSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Telefon
+                {t.dashboard.phone}
               </label>
               <input
                 type="tel"
@@ -222,7 +223,7 @@ export default function DashboardSettings() {
               disabled={isLoading}
               className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Čuvanje...' : 'Sačuvaj promene'}
+              {isLoading ? t.dashboard.saving : t.dashboard.saveChanges}
             </button>
           </form>
         </div>
@@ -231,12 +232,12 @@ export default function DashboardSettings() {
       {/* Security Tab */}
       {activeTab === 'security' && (
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Promena lozinke</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t.dashboard.security}</h2>
           
           <form onSubmit={handlePasswordSubmit} className="space-y-6 max-w-xl">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Trenutna lozinka
+                {t.dashboard.currentPassword}
               </label>
               <input
                 type="password"
@@ -248,7 +249,7 @@ export default function DashboardSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nova lozinka
+                {t.dashboard.newPassword}
               </label>
               <input
                 type="password"
@@ -260,7 +261,7 @@ export default function DashboardSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Potvrdi novu lozinku
+                {t.dashboard.confirmPassword}
               </label>
               <input
                 type="password"
@@ -275,7 +276,7 @@ export default function DashboardSettings() {
               disabled={isLoading}
               className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Čuvanje...' : 'Promeni lozinku'}
+              {isLoading ? t.dashboard.saving : t.dashboard.changePassword}
             </button>
           </form>
         </div>
@@ -284,14 +285,13 @@ export default function DashboardSettings() {
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Podešavanja obaveštenja</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t.dashboard.notificationsSettings}</h2>
           
           <div className="space-y-4">
             {[
-              { id: 'email_messages', label: 'Email obaveštenja za poruke', description: 'Primajte email kada dobijete novu poruku' },
-              { id: 'email_favorites', label: 'Obaveštenja za omiljene', description: 'Primajte email kada neko doda vaš oglas u omiljene' },
-              { id: 'email_views', label: 'Izveštaji o pregledima', description: 'Nedeljni izveštaj o pregledima vaših oglasa' },
-              { id: 'push_messages', label: 'Push obaveštenja', description: 'Primajte push obaveštenja u pregledaču' },
+              { id: 'email_messages', label: t.dashboard.emailNotifications, description: t.dashboard.emailNotificationsDesc },
+              { id: 'sms_notifications', label: t.dashboard.smsNotifications, description: t.dashboard.smsNotificationsDesc },
+              { id: 'marketing_emails', label: t.dashboard.marketingEmails, description: t.dashboard.marketingEmailsDesc },
             ].map((setting) => (
               <div key={setting.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#252525] rounded-lg border border-gray-100 dark:border-gray-700">
                 <div>

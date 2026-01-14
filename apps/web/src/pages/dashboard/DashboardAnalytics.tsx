@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 // Will be used when real API is connected
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -22,6 +22,7 @@ interface AnalyticsData {
 
 export default function DashboardAnalytics() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
@@ -62,7 +63,7 @@ export default function DashboardAnalytics() {
   }
 
   if (!analytics) {
-    return <div>Nema dostupnih podataka</div>;
+    return <div>{t.dashboard.noDataAvailable}</div>;
   }
 
   const maxViews = Math.max(...analytics.viewsByDay.map(d => d.views));
@@ -72,16 +73,16 @@ export default function DashboardAnalytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analitika</h1>
-          <p className="text-gray-500 dark:text-gray-400">Pratite performanse vaših oglasa</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.analytics}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t.dashboard.trackPerformance}</p>
         </div>
         
         {/* Period Selector */}
         <div className="flex gap-2">
           {[
-            { value: '7d', label: '7 dana' },
-            { value: '30d', label: '30 dana' },
-            { value: '90d', label: '90 dana' },
+            { value: '7d', label: t.dashboard.days7 },
+            { value: '30d', label: t.dashboard.days30 },
+            { value: '90d', label: t.dashboard.days90 },
           ].map((p) => (
             <button
               key={p.value}
@@ -102,7 +103,7 @@ export default function DashboardAnalytics() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ukupno pregleda</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.totalViews}</p>
             <span className="text-green-500 text-sm">+{analytics.viewsChange}%</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalViews.toLocaleString()}</p>
@@ -110,26 +111,26 @@ export default function DashboardAnalytics() {
 
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Omiljeni</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.favorites}</p>
             <span className="text-green-500 text-sm">+{analytics.favoritesChange}</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalFavorites}</p>
         </div>
 
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Aktivni oglasi</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t.dashboard.activeListings}</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalListings}</p>
         </div>
 
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Upiti</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t.dashboard.inquiries}</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalInquiries}</p>
         </div>
       </div>
 
       {/* Views Chart */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Pregledi po danima</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t.dashboard.viewsByDay}</h2>
         <div className="flex items-end justify-between h-48 gap-2">
           {analytics.viewsByDay.map((day, index) => (
             <div key={index} className="flex-1 flex flex-col items-center">
@@ -142,11 +143,11 @@ export default function DashboardAnalytics() {
                   style={{ height: `${(day.views / maxViews) * 100}%` }}
                 />
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {day.views} pregleda
+                  {day.views} {t.dashboard.viewsCount}
                 </div>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {new Date(day.date).toLocaleDateString('sr-RS', { weekday: 'short' })}
+                {[t.dashboard.sunday, t.dashboard.monday, t.dashboard.tuesday, t.dashboard.wednesday, t.dashboard.thursday, t.dashboard.friday, t.dashboard.saturday][new Date(day.date).getDay()]}
               </p>
             </div>
           ))}
@@ -155,7 +156,7 @@ export default function DashboardAnalytics() {
 
       {/* Top Listings */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Najpopularniji oglasi</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t.dashboard.topListings}</h2>
         <div className="space-y-4">
           {analytics.topListings.map((listing, index) => (
             <div key={listing._id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#252525] rounded-lg border border-gray-100 dark:border-gray-700">
@@ -164,7 +165,7 @@ export default function DashboardAnalytics() {
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{listing.title}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {listing.views} pregleda · {listing.favorites} omiljenih
+                    {listing.views} {t.dashboard.viewsCount} · {listing.favorites} {t.dashboard.favoritesCount}
                   </p>
                 </div>
               </div>

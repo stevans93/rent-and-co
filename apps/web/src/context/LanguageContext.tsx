@@ -56,6 +56,7 @@ const swissRegionLanguages: Record<string, Language> = {
 
 // Cache key for sessionStorage
 const GEO_CACHE_KEY = 'geo_language_cache';
+const USER_LANG_KEY = 'rent-and-co-language'; // User's manual language selection
 const GEO_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
 interface GeoCache {
@@ -151,23 +152,33 @@ async function detectLanguageFromGeo(skipCache: boolean = false): Promise<Langua
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // Initialize with cached geo language or English
+  // Initialize with user's saved preference, or cached geo language, or English
   const [language, setLanguageState] = useState<Language>(() => {
+    // First check if user has manually selected a language
+    const savedLang = localStorage.getItem(USER_LANG_KEY) as Language;
+    if (savedLang && ['sr', 'en', 'ro', 'fr', 'de', 'it'].includes(savedLang)) {
+      return savedLang;
+    }
+    // Otherwise use cached geo language or English
     const cachedGeo = getCachedGeoLanguage();
     return cachedGeo || 'en';
   });
 
-  // Detect language from geolocation on every page load
+  // Detect language from geolocation only if user hasn't set a preference
   useEffect(() => {
-    // Always detect from geolocation on refresh - ignore cache
-    detectLanguageFromGeo(true).then((detectedLang) => {
-      setLanguageState(detectedLang);
-    });
+    const savedLang = localStorage.getItem(USER_LANG_KEY);
+    // Only auto-detect if user hasn't manually selected a language
+    if (!savedLang) {
+      detectLanguageFromGeo(true).then((detectedLang) => {
+        setLanguageState(detectedLang);
+      });
+    }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    // Manual selection only lasts until page refresh - don't update geo cache
+    // Save user's manual selection to localStorage (persists across refreshes)
+    localStorage.setItem(USER_LANG_KEY, lang);
   };
 
   useEffect(() => {

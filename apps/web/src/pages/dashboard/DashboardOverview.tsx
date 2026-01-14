@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 // Stat Card Component
 function StatCard({ 
@@ -95,6 +95,7 @@ function QuickActionCard({
 
 export default function DashboardOverview() {
   useAuth(); // Will be used for user-specific data
+  const { t } = useLanguage();
 
   // Mock data - will be replaced with real API calls
   const stats = {
@@ -105,17 +106,17 @@ export default function DashboardOverview() {
   };
 
   const recentActivity = [
-    { title: 'Novi pregled', description: 'Luksuzan stan u centru', time: 'pre 5 minuta' },
-    { title: 'Dodat u omiljene', description: 'Porodična kuća sa baštom', time: 'pre 1 sat' },
-    { title: 'Nova poruka', description: 'Moderni kancelarijski prostor', time: 'pre 2 sata' },
+    { title: t.dashboard.newView, description: 'Luksuzan stan u centru', time: t.dashboard.minutesAgo },
+    { title: t.dashboard.addedToFavorites, description: 'Porodična kuća sa baštom', time: t.dashboard.hourAgo },
+    { title: t.dashboard.newMessage, description: 'Moderni kancelarijski prostor', time: t.dashboard.hoursAgo },
   ];
 
   return (
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dobrodošli nazad!</h1>
-        <p className="text-gray-500 dark:text-gray-400">Evo pregleda vaše aktivnosti</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.welcomeBack}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.activityOverview}</p>
       </div>
 
       {/* Stats Grid */}
@@ -126,10 +127,10 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           }
-          label="Aktivni oglasi"
+          label={t.dashboard.activeListings}
           value={stats.activeListings}
           change="+2"
-          changeLabel="ovog meseca"
+          changeLabel={t.dashboard.thisMonth}
         />
         <StatCard
           icon={
@@ -138,10 +139,10 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           }
-          label="Ukupno pregleda"
+          label={t.dashboard.totalViews}
           value={stats.totalViews.toLocaleString()}
           change="+15%"
-          changeLabel="od prošle nedelje"
+          changeLabel={t.dashboard.lastWeek}
         />
         <StatCard
           icon={
@@ -149,10 +150,10 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           }
-          label="Omiljeni"
+          label={t.dashboard.favorites}
           value={stats.favorites}
           change="+8"
-          changeLabel="novih"
+          changeLabel={t.dashboard.newOnes}
         />
         <StatCard
           icon={
@@ -160,16 +161,16 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           }
-          label="Konverzija"
+          label={t.dashboard.conversion}
           value={`${stats.conversionRate}%`}
           change="+0.5%"
-          changeLabel="poboljšanje"
+          changeLabel={t.dashboard.improvement}
         />
       </div>
 
       {/* Recent Activity */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Nedavna aktivnost</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h2>
         <div>
           {recentActivity.map((activity, index) => (
             <ActivityItem key={index} {...activity} />
@@ -185,8 +186,8 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           }
-          title="Dodaj novi oglas"
-          description="Objavite novu nekretninu"
+          title={t.dashboard.addNewListing}
+          description={t.dashboard.publishProperty}
           to="/dashboard/add-listing"
         />
         <QuickActionCard
@@ -196,8 +197,8 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           }
-          title="Pogledaj statistiku"
-          description="Detaljni izveštaji"
+          title={t.dashboard.viewStatistics}
+          description={t.dashboard.detailedReports}
           to="/dashboard/analytics"
         />
         <QuickActionCard
@@ -206,8 +207,8 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           }
-          title="Upravljaj omiljenima"
-          description="Vaši sačuvani oglasi"
+          title={t.dashboard.manageListings}
+          description={t.dashboard.editAndUpdate}
           to="/favorites"
         />
       </div>

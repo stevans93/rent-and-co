@@ -1,18 +1,20 @@
 import { useState } from 'react';
+import { useLanguage } from '../../context';
 
 interface PaymentPlan {
   id: string;
-  name: string;
+  nameKey: string;
   price: number;
-  period: string;
-  features: string[];
+  periodKey: string;
+  featureKeys: string[];
   popular?: boolean;
 }
 
 interface Transaction {
   id: string;
   date: string;
-  description: string;
+  planKey: string;
+  monthKey: string;
   amount: number;
   status: 'completed' | 'pending' | 'failed';
 }
@@ -20,54 +22,111 @@ interface Transaction {
 const plans: PaymentPlan[] = [
   {
     id: 'basic',
-    name: 'Osnovni',
+    nameKey: 'basicPlan',
     price: 0,
-    period: 'mesečno',
-    features: [
-      'Do 3 aktivna oglasa',
-      'Osnovne statistike',
-      'Email podrška',
+    periodKey: 'monthly',
+    featureKeys: [
+      'upTo3Listings',
+      'basicStats',
+      'emailSupport',
     ],
   },
   {
     id: 'pro',
-    name: 'Pro',
+    nameKey: 'proPlan',
     price: 1990,
-    period: 'mesečno',
-    features: [
-      'Do 15 aktivnih oglasa',
-      'Napredne statistike',
-      'Prioritetna podrška',
-      'Istaknuti oglasi',
-      'Bez reklama',
+    periodKey: 'monthly',
+    featureKeys: [
+      'upTo15Listings',
+      'advancedStats',
+      'prioritySupport',
+      'featuredListings',
+      'noAds',
     ],
     popular: true,
   },
   {
     id: 'business',
-    name: 'Biznis',
+    nameKey: 'businessPlan',
     price: 4990,
-    period: 'mesečno',
-    features: [
-      'Neograničen broj oglasa',
-      'Premium statistike',
-      '24/7 podrška',
-      'API pristup',
-      'Verifikovan profil',
-      'Prioritet u pretrazi',
+    periodKey: 'monthly',
+    featureKeys: [
+      'unlimitedListings',
+      'premiumStats',
+      'support247',
+      'apiAccess',
+      'verifiedProfile',
+      'searchPriority',
     ],
   },
 ];
 
 const mockTransactions: Transaction[] = [
-  { id: '1', date: '2026-01-10', description: 'Pro paket - januar', amount: 1990, status: 'completed' },
-  { id: '2', date: '2025-12-10', description: 'Pro paket - decembar', amount: 1990, status: 'completed' },
-  { id: '3', date: '2025-11-10', description: 'Pro paket - novembar', amount: 1990, status: 'completed' },
+  { id: '1', date: '2026-01-10', planKey: 'pro', monthKey: 'january', amount: 1990, status: 'completed' },
+  { id: '2', date: '2025-12-10', planKey: 'pro', monthKey: 'december', amount: 1990, status: 'completed' },
+  { id: '3', date: '2025-11-10', planKey: 'pro', monthKey: 'november', amount: 1990, status: 'completed' },
 ];
 
 export default function DashboardPayments() {
+  const { t } = useLanguage();
   const [currentPlan] = useState('pro');
   const [activeTab, setActiveTab] = useState<'plans' | 'history'>('plans');
+
+  // Helper to get translated plan names
+  const getPlanName = (nameKey: string) => {
+    const names: Record<string, string> = {
+      basicPlan: t.dashboard.basic,
+      proPlan: t.dashboard.pro,
+      businessPlan: t.dashboard.businessPlanName,
+    };
+    return names[nameKey] || nameKey;
+  };
+
+  // Helper to get translated features
+  const getFeature = (featureKey: string) => {
+    const features: Record<string, string> = {
+      upTo3Listings: t.dashboard.upTo3Listings,
+      basicStats: t.dashboard.basicStats,
+      emailSupport: t.dashboard.emailSupport,
+      upTo15Listings: t.dashboard.upTo15Listings,
+      advancedStats: t.dashboard.advancedStats,
+      prioritySupport: t.dashboard.prioritySupport,
+      featuredListings: t.dashboard.featuredListings,
+      noAds: t.dashboard.noAds,
+      unlimitedListings: t.dashboard.unlimitedListings,
+      premiumStats: t.dashboard.premiumStats,
+      support247: t.dashboard.support247,
+      apiAccess: t.dashboard.apiAccess,
+      verifiedProfile: t.dashboard.verifiedProfile,
+      searchPriority: t.dashboard.searchPriority,
+    };
+    return features[featureKey] || featureKey;
+  };
+
+  // Helper to get translated month name
+  const getMonthName = (monthKey: string) => {
+    const months: Record<string, string> = {
+      january: t.dashboard.january,
+      february: t.dashboard.february,
+      march: t.dashboard.march,
+      april: t.dashboard.april,
+      may: t.dashboard.may,
+      june: t.dashboard.june,
+      july: t.dashboard.july,
+      august: t.dashboard.august,
+      september: t.dashboard.september,
+      october: t.dashboard.october,
+      november: t.dashboard.november,
+      december: t.dashboard.december,
+    };
+    return months[monthKey] || monthKey;
+  };
+
+  // Helper to get transaction description
+  const getTransactionDescription = (transaction: Transaction) => {
+    const monthName = getMonthName(transaction.monthKey);
+    return `${t.dashboard.proPackage} - ${monthName}`;
+  };
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -76,9 +135,9 @@ export default function DashboardPayments() {
       failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     };
     const labels = {
-      completed: 'Uspešno',
-      pending: 'Na čekanju',
-      failed: 'Neuspešno',
+      completed: t.dashboard.completed,
+      pending: t.dashboard.pendingStatus,
+      failed: t.dashboard.failed,
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles]}`}>
@@ -91,21 +150,21 @@ export default function DashboardPayments() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Plaćanja</h1>
-        <p className="text-gray-500 dark:text-gray-400">Upravljajte pretplatom i pregledajte istoriju plaćanja</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.payments}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.manageSubscription}</p>
       </div>
 
       {/* Current Plan Banner */}
       <div className="bg-gradient-to-r from-[#e85d45] to-[#ff7b5a] rounded-xl p-6 text-white">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <p className="text-white/80 text-sm">Vaš trenutni paket</p>
-            <h2 className="text-2xl font-bold">Pro</h2>
-            <p className="text-white/80">Sledeća naplata: 10. februar 2026.</p>
+            <p className="text-white/80 text-sm">{t.dashboard.currentPlan}</p>
+            <h2 className="text-2xl font-bold">{t.dashboard.pro}</h2>
+            <p className="text-white/80">{t.dashboard.planExpiresOn}: 10. {t.dashboard.february} 2026.</p>
           </div>
           <div className="flex gap-3">
             <button className="px-4 py-2 bg-white text-[#e85d45] rounded-lg font-medium hover:bg-white/90 transition-colors">
-              Upravljaj pretplatom
+              {t.dashboard.manageSubscription}
             </button>
           </div>
         </div>
@@ -121,7 +180,7 @@ export default function DashboardPayments() {
               : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
-          Paketi
+          {t.dashboard.plans}
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -131,7 +190,7 @@ export default function DashboardPayments() {
               : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
-          Istorija plaćanja
+          {t.dashboard.paymentHistory}
         </button>
       </div>
 
@@ -149,27 +208,27 @@ export default function DashboardPayments() {
             >
               {plan.popular && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#e85d45] text-white text-xs px-3 py-1 rounded-full font-medium">
-                  Najpopularniji
+                  {t.dashboard.popular}
                 </span>
               )}
               <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{getPlanName(plan.nameKey)}</h3>
                 <div className="mt-3">
                   <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                    {plan.price === 0 ? 'Besplatno' : `${plan.price.toLocaleString()} RSD`}
+                    {plan.price === 0 ? t.dashboard.basic : `${plan.price.toLocaleString()} RSD`}
                   </span>
                   {plan.price > 0 && (
-                    <span className="text-gray-500 dark:text-gray-400">/{plan.period}</span>
+                    <span className="text-gray-500 dark:text-gray-400">/{t.dashboard.monthly}</span>
                   )}
                 </div>
               </div>
               <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
+                {plan.featureKeys.map((featureKey, index) => (
                   <li key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    {feature}
+                    {getFeature(featureKey)}
                   </li>
                 ))}
               </ul>
@@ -183,7 +242,7 @@ export default function DashboardPayments() {
                 }`}
                 disabled={currentPlan === plan.id}
               >
-                {currentPlan === plan.id ? 'Trenutni paket' : 'Izaberi'}
+                {currentPlan === plan.id ? t.dashboard.currentPlanLabel : t.dashboard.selectPlan}
               </button>
             </div>
           ))}
@@ -196,21 +255,21 @@ export default function DashboardPayments() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Datum</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Opis</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Iznos</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Račun</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.date}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionDescription}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.amount}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionStatus}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {mockTransactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                    {new Date(transaction.date).toLocaleDateString('sr-RS')}
+                    {new Date(transaction.date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {transaction.description}
+                    {getTransactionDescription(transaction)}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                     {transaction.amount.toLocaleString()} RSD
@@ -220,7 +279,7 @@ export default function DashboardPayments() {
                   </td>
                   <td className="px-6 py-4">
                     <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
-                      Preuzmi
+                      {t.dashboard.download}
                     </button>
                   </td>
                 </tr>
@@ -229,7 +288,7 @@ export default function DashboardPayments() {
           </table>
           {mockTransactions.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">Nema istorije plaćanja</p>
+              <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noDataAvailable}</p>
             </div>
           )}
         </div>
@@ -237,7 +296,7 @@ export default function DashboardPayments() {
 
       {/* Payment Methods */}
       <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Načini plaćanja</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.cardInfo}</h3>
         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="w-12 h-8 bg-gradient-to-r from-gray-700 to-gray-900 rounded flex items-center justify-center text-white text-xs font-bold">
@@ -245,18 +304,18 @@ export default function DashboardPayments() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">•••• •••• •••• 4242</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Ističe 12/27</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t.dashboard.validThru} 12/27</p>
             </div>
           </div>
           <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
-            Izmeni
+            {t.dashboard.edit}
           </button>
         </div>
         <button className="mt-4 text-[#e85d45] hover:text-[#d54d35] text-sm font-medium flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Dodaj novi način plaćanja
+          {t.dashboard.addNewPaymentMethod}
         </button>
       </div>
     </div>

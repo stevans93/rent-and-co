@@ -29,6 +29,12 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper to get translated category name
+  const getCategoryName = (slug: string, fallbackName: string) => {
+    const categoryNames = t.categories as Record<string, string>;
+    return categoryNames[slug] || fallbackName;
+  };
+
   // Dynamic hero images based on theme
   const heroImage = isDark
     ? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920'
@@ -100,14 +106,14 @@ export default function CategoriesPage() {
             >
               <img
                 src={category.coverImage || categoryImages[category.slug] || categoryImages['razno']}
-                alt={category.name}
+                alt={getCategoryName(category.slug, category.name)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 dark-image"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">
                 <div className="flex items-center gap-2">
                   {category.icon && <span className="text-2xl">{category.icon}</span>}
-                  <h3 className="text-xl font-bold">{category.name}</h3>
+                  <h3 className="text-xl font-bold">{getCategoryName(category.slug, category.name)}</h3>
                 </div>
                 <p className="text-sm text-gray-300">
                   {category.count || 0} {t.categories.results}

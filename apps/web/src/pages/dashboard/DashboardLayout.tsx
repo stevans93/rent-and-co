@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth, useTheme } from '../../context';
+import { useAuth, useTheme, useLanguage } from '../../context';
+import { Language } from '../../i18n';
 
 // SVG Icons as components for cleaner look
 const icons = {
@@ -92,35 +93,48 @@ const icons = {
   ),
 };
 
-const sidebarLinks = [
-  { to: '/dashboard', icon: icons.dashboard, label: 'Pregled', end: true },
-  { to: '/dashboard/my-listings', icon: icons.listings, label: 'Moji oglasi' },
-  { to: '/dashboard/add-listing', icon: icons.add, label: 'Dodaj oglas' },
-  { to: '/dashboard/analytics', icon: icons.analytics, label: 'Analitika' },
-  { to: '/dashboard/payments', icon: icons.payments, label: 'Plaćanja' },
-  { to: '/dashboard/settings', icon: icons.settings, label: 'Podešavanja' },
-  { to: '/dashboard/help', icon: icons.help, label: 'Uputstvo' },
+const sidebarLinksConfig = [
+  { to: '/dashboard', icon: icons.dashboard, labelKey: 'overview' as const, end: true },
+  { to: '/dashboard/my-listings', icon: icons.listings, labelKey: 'myListings' as const },
+  { to: '/dashboard/add-listing', icon: icons.add, labelKey: 'addListing' as const },
+  { to: '/dashboard/analytics', icon: icons.analytics, labelKey: 'analytics' as const },
+  { to: '/dashboard/payments', icon: icons.payments, labelKey: 'payments' as const },
+  { to: '/dashboard/settings', icon: icons.settings, labelKey: 'settings' as const },
+  { to: '/dashboard/help', icon: icons.help, labelKey: 'help' as const },
 ];
 
-const adminLinks = [
-  { to: '/dashboard/users', icon: icons.users, label: 'Korisnici' },
-  { to: '/dashboard/all-listings', icon: icons.allListings, label: 'Svi oglasi' },
+const adminLinksConfig = [
+  { to: '/dashboard/users', icon: icons.users, labelKey: 'users' as const },
+  { to: '/dashboard/all-listings', icon: icons.allListings, labelKey: 'allListings' as const },
 ];
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  const languages: { code: Language; label: string; flag: string }[] = [
+    { code: 'sr', label: 'Srpski', flag: '🇷🇸' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'ro', label: 'Română', flag: '🇷🇴' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+    { code: 'it', label: 'Italiano', flag: '🇮🇹' },
+  ];
+
+  const currentLang = languages.find(l => l.code === language);
   
   // Mock notifications - will be replaced with real data
-  const [notifications] = useState([
-    { id: 1, title: 'Novi pregled', message: 'Vaš oglas "Luksuzan stan" ima novi pregled', time: 'pre 5 min', read: false },
-    { id: 2, title: 'Dodat u omiljene', message: 'Korisnik je dodao vaš oglas u omiljene', time: 'pre 1 sat', read: false },
-    { id: 3, title: 'Nova poruka', message: 'Imate novu poruku od korisnika', time: 'pre 2 sata', read: true },
-  ]);
+  const notifications = [
+    { id: 1, title: t.dashboard.newView, message: t.dashboard.yourListingHasNewView, time: t.dashboard.minutesAgo, read: false },
+    { id: 2, title: t.dashboard.addedToFavorites, message: t.dashboard.userAddedToFavorites, time: t.dashboard.hourAgo, read: false },
+    { id: 3, title: t.dashboard.newMessage, message: t.dashboard.youHaveNewMessage, time: t.dashboard.hoursAgo, read: true },
+  ];
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Redirect if not logged in
@@ -176,7 +190,7 @@ export default function DashboardLayout() {
           <button
             onClick={toggleSidebar}
             className="hidden lg:flex items-center justify-center w-9 h-9 hover:bg-white/10 rounded-lg transition-colors"
-            aria-label={sidebarOpen ? 'Zatvori sidebar' : 'Otvori sidebar'}
+            aria-label={sidebarOpen ? t.dashboard.closeSidebar : t.dashboard.openSidebar}
           >
             {sidebarOpen ? icons.chevronLeft : icons.chevronRight}
           </button>
@@ -184,11 +198,54 @@ export default function DashboardLayout() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="flex items-center text-sm text-gray-300 hover:text-white transition-colors px-2 py-1 border border-gray-600 rounded-lg"
+            >
+              <span className="leading-none">{currentLang?.code.toUpperCase()}</span>
+              <svg
+                className={`w-4 h-4 ml-1 transition-transform ${isLangOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isLangOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsLangOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#1e1e1e] rounded-lg shadow-lg py-1 z-50">
+                  {languages.map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setIsLangOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center ${
+                        language === lang.code ? 'text-[#e85d45]' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            aria-label={isDark ? 'Svetli režim' : 'Tamni režim'}
+            aria-label={isDark ? t.dashboard.lightMode : t.dashboard.darkMode}
           >
             {isDark ? icons.sun : icons.moon}
           </button>
@@ -198,7 +255,7 @@ export default function DashboardLayout() {
             <button 
               onClick={() => setNotificationsOpen(!notificationsOpen)}
               className="relative p-2 hover:bg-white/10 rounded-lg transition-colors"
-              aria-label="Obaveštenja"
+              aria-label={t.dashboard.notifications}
             >
               {icons.notification}
               {unreadCount > 0 && (
@@ -217,15 +274,15 @@ export default function DashboardLayout() {
                 />
                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Obaveštenja</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{t.dashboard.notifications}</h3>
                     {unreadCount > 0 && (
-                      <span className="text-xs text-[#e85d45]">{unreadCount} nova</span>
+                      <span className="text-xs text-[#e85d45]">{unreadCount} {t.dashboard.newNotifications}</span>
                     )}
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                        Nema obaveštenja
+                        {t.dashboard.noNotifications}
                       </div>
                     ) : (
                       notifications.map(notification => (
@@ -249,7 +306,7 @@ export default function DashboardLayout() {
                   </div>
                   <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
                     <button className="w-full text-center text-sm text-[#e85d45] hover:text-[#d54d35] font-medium">
-                      Prikaži sva obaveštenja
+                      {t.dashboard.showAllNotifications}
                     </button>
                   </div>
                 </div>
@@ -276,7 +333,7 @@ export default function DashboardLayout() {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors ml-2"
-            aria-label={mobileMenuOpen ? 'Zatvori meni' : 'Otvori meni'}
+            aria-label={mobileMenuOpen ? t.dashboard.closeMenu : t.dashboard.openMenu}
           >
             {mobileMenuOpen ? icons.close : icons.menu}
           </button>
@@ -295,7 +352,7 @@ export default function DashboardLayout() {
         <nav className="flex flex-col h-full">
           {/* Main Navigation */}
           <div className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
-            {sidebarLinks.map((link) => (
+            {sidebarLinksConfig.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -308,7 +365,7 @@ export default function DashboardLayout() {
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`
                 }
-                title={!sidebarOpen ? link.label : undefined}
+                title={!sidebarOpen ? t.dashboard[link.labelKey] : undefined}
               >
                 <span className="flex-shrink-0 w-5">{link.icon}</span>
                 <span 
@@ -319,7 +376,7 @@ export default function DashboardLayout() {
                     transition: 'opacity 0.4s ease-in-out, max-width 0.5s ease-in-out'
                   }}
                 >
-                  {link.label}
+                  {t.dashboard[link.labelKey]}
                 </span>
               </NavLink>
             ))}
@@ -337,11 +394,11 @@ export default function DashboardLayout() {
                     transition: 'opacity 0.4s ease-in-out'
                   }}
                 >
-                  Admin
+                  {t.dashboard.admin}
                 </span>
               </div>
               
-              {adminLinks.map((link) => (
+              {adminLinksConfig.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
@@ -353,7 +410,7 @@ export default function DashboardLayout() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`
                   }
-                  title={!sidebarOpen ? link.label : undefined}
+                  title={!sidebarOpen ? t.dashboard[link.labelKey] : undefined}
                 >
                   <span className="flex-shrink-0 w-5">{link.icon}</span>
                   <span 
@@ -364,7 +421,7 @@ export default function DashboardLayout() {
                       transition: 'opacity 0.4s ease-in-out, max-width 0.5s ease-in-out'
                     }}
                   >
-                    {link.label}
+                    {t.dashboard[link.labelKey]}
                   </span>
                 </NavLink>
               ))}
@@ -376,7 +433,7 @@ export default function DashboardLayout() {
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 pl-5 pr-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 w-full"
-              title={!sidebarOpen ? 'Odjavi se' : undefined}
+              title={!sidebarOpen ? t.dashboard.logout : undefined}
             >
               <span className="flex-shrink-0 w-5">{icons.logout}</span>
               <span 
@@ -387,7 +444,7 @@ export default function DashboardLayout() {
                   transition: 'opacity 0.4s ease-in-out, max-width 0.5s ease-in-out'
                 }}
               >
-                Odjavi se
+                {t.dashboard.logout}
               </span>
             </button>
           </div>

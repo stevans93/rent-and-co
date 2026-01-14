@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -24,6 +24,7 @@ interface PaginationData {
 
 export default function AdminUsers() {
   const { token, user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,11 +188,11 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Upravljanje korisnicima</h1>
-          <p className="text-gray-500 dark:text-gray-400">Pregledajte i upravljajte svim korisnicima</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.usersManagement}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t.dashboard.users}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Ukupno: {pagination.total} korisnika</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{pagination.total} {t.dashboard.users}</span>
         </div>
       </div>
 
@@ -205,7 +206,7 @@ export default function AdminUsers() {
             </svg>
             <input
               type="text"
-              placeholder="Pretraži korisnike..."
+              placeholder={t.dashboard.searchUsers}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
@@ -221,9 +222,9 @@ export default function AdminUsers() {
             }}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
           >
-            <option value="all">Sve uloge</option>
-            <option value="user">Korisnik</option>
-            <option value="moderator">Moderator</option>
+            <option value="all">{t.dashboard.allRoles}</option>
+            <option value="user">{t.dashboard.user}</option>
+            <option value="moderator">{t.dashboard.moderator}</option>
             <option value="admin">Admin</option>
           </select>
 
@@ -233,9 +234,9 @@ export default function AdminUsers() {
             onChange={(e) => handlePerPageChange(Number(e.target.value))}
             className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
           >
-            <option value={5}>5 po stranici</option>
-            <option value={10}>10 po stranici</option>
-            <option value={15}>15 po stranici</option>
+            <option value={5}>5 {t.dashboard.perPage}</option>
+            <option value={10}>10 {t.dashboard.perPage}</option>
+            <option value={15}>15 {t.dashboard.perPage}</option>
           </select>
         </div>
       </div>
@@ -246,11 +247,11 @@ export default function AdminUsers() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Korisnik</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Email</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Uloga</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Registrovan</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">Akcije</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.user}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.email}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.role}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.registered}</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -278,7 +279,7 @@ export default function AdminUsers() {
                   <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                      {user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? 'Moderator' : 'Korisnik'}
+                      {user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? t.dashboard.moderator : t.dashboard.user}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
@@ -294,13 +295,13 @@ export default function AdminUsers() {
                           }}
                           className="text-[#e85d45] hover:text-[#d54d35] text-sm"
                         >
-                          Izmeni ulogu
+                          {t.dashboard.changeRole}
                         </button>
                         <button
                           onClick={() => deleteUser(user._id)}
                           className="text-red-500 hover:text-red-700 text-sm"
                         >
-                          Obriši
+                          {t.dashboard.delete}
                         </button>
                       </div>
                     )}
@@ -316,7 +317,7 @@ export default function AdminUsers() {
             <svg className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-            <p className="text-gray-500 dark:text-gray-400">Nema pronađenih korisnika</p>
+            <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noUsersFound}</p>
           </div>
         )}
 
@@ -324,7 +325,7 @@ export default function AdminUsers() {
         {pagination.pages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Prikazano {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, pagination.total)} od {pagination.total}
+              {t.dashboard.showing} {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, pagination.total)} {t.dashboard.of} {pagination.total}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -332,7 +333,7 @@ export default function AdminUsers() {
                 disabled={currentPage === 1}
                 className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Prethodna
+                {t.dashboard.previous}
               </button>
               {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(page => (
                 <button

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '../../context';
+import { useAuth, useLanguage } from '../../context';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -34,6 +34,7 @@ interface Category {
 
 export default function AddListing() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
@@ -43,6 +44,12 @@ export default function AddListing() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to get translated category name
+  const getCategoryName = (slug: string, fallbackName: string) => {
+    const categoryNames = t.categories as Record<string, string>;
+    return categoryNames[slug] || fallbackName;
+  };
 
   const {
     register,
@@ -180,10 +187,10 @@ export default function AddListing() {
   };
 
   const steps = [
-    { num: 1, label: 'Osnovne informacije' },
-    { num: 2, label: 'Fotografije' },
-    { num: 3, label: 'Lokacija' },
-    { num: 4, label: 'Cena' },
+    { num: 1, label: t.dashboard.basicInfo },
+    { num: 2, label: t.dashboard.images },
+    { num: 3, label: t.dashboard.location },
+    { num: 4, label: t.dashboard.price },
   ];
 
   const rentalTypes = [
@@ -197,8 +204,8 @@ export default function AddListing() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dodaj novi oglas</h1>
-        <p className="text-gray-500 dark:text-gray-400">Popunite informacije o vašoj nekretnini</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.addListing}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.basicInfo}</p>
       </div>
 
       {/* Step Indicator */}
@@ -232,17 +239,17 @@ export default function AddListing() {
                 <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Osnovne informacije</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.basicInfo}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Unesite osnovne podatke o oglasu</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.descriptionPlaceholder}</p>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Naslov oglasa *
+                  {t.dashboard.listingTitle} *
                 </label>
                 <input
                   {...register('title')}
-                  placeholder="npr. Luksuzan stan u centru grada"
+                  placeholder={t.dashboard.titlePlaceholder}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                 />
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
@@ -251,15 +258,15 @@ export default function AddListing() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Kategorija *
+                    {t.dashboard.category} *
                   </label>
                   <select
                     {...register('categoryId')}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
-                    <option value="">Izaberite kategoriju</option>
+                    <option value="">{t.dashboard.selectCategory}</option>
                     {categories.map(cat => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      <option key={cat._id} value={cat._id}>{getCategoryName(cat.slug, cat.name)}</option>
                     ))}
                   </select>
                   {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>}
@@ -267,13 +274,13 @@ export default function AddListing() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tip rentiranja *
+                    {t.dashboard.status} *
                   </label>
                   <select
                     {...register('rentalType')}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
-                    <option value="">Izaberite tip</option>
+                    <option value="">{t.dashboard.selectCategory}</option>
                     {rentalTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
@@ -283,12 +290,12 @@ export default function AddListing() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Opis *
+                  {t.dashboard.description} *
                 </label>
                 <textarea
                   {...register('description')}
                   rows={5}
-                  placeholder="Opišite vašu nekretninu detaljno..."
+                  placeholder={t.dashboard.descriptionPlaceholder}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all resize-none"
                 />
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
@@ -303,9 +310,9 @@ export default function AddListing() {
                 <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Fotografije</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.images}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Dodajte do 10 fotografija</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.maxImages}</p>
 
               {/* Image Upload Area */}
               <div
@@ -323,8 +330,8 @@ export default function AddListing() {
                 <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="text-gray-600 dark:text-gray-400">Prevucite fotografije ovde ili kliknite za upload</p>
-                <p className="text-sm text-gray-400 mt-2">PNG, JPG do 5MB</p>
+                <p className="text-gray-600 dark:text-gray-400">{t.dashboard.dragAndDrop} <span className="text-[#e85d45]">{t.dashboard.browseFiles}</span></p>
+                <p className="text-sm text-gray-400 mt-2">PNG, JPG - 5MB max</p>
               </div>
 
               {/* Image Previews */}
@@ -361,14 +368,14 @@ export default function AddListing() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lokacija</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.location}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Unesite adresu nekretnine</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.enterPropertyAddress}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Grad *
+                    {t.dashboard.city} *
                   </label>
                   <input
                     {...register('location.city')}
@@ -380,7 +387,7 @@ export default function AddListing() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Opština
+                    {t.dashboard.municipality}
                   </label>
                   <input
                     {...register('location.municipality')}
@@ -392,7 +399,7 @@ export default function AddListing() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Adresa
+                  {t.dashboard.address}
                 </label>
                 <input
                   {...register('location.address')}
@@ -410,14 +417,14 @@ export default function AddListing() {
                 <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Cena</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.price}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Postavite cenu za rentiranje</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.setPriceForRenting}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cena (EUR) *
+                    {t.dashboard.priceEur} *
                   </label>
                   <input
                     {...register('pricePerDay')}
@@ -430,13 +437,13 @@ export default function AddListing() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Po periodu *
+                    {t.dashboard.perPeriod} *
                   </label>
                   <select
                     {...register('currency')}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
-                    <option value="EUR">Po danu</option>
+                    <option value="EUR">{t.dashboard.perDay}</option>
                   </select>
                 </div>
               </div>
@@ -459,7 +466,7 @@ export default function AddListing() {
             disabled={step === 1}
             className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Nazad
+            {t.dashboard.back}
           </button>
 
           <div className="flex gap-3">
@@ -467,7 +474,7 @@ export default function AddListing() {
               type="button"
               className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              Sačuvaj kao nacrt
+              {t.dashboard.saveAsDraft}
             </button>
 
             {step < 4 ? (
@@ -476,7 +483,7 @@ export default function AddListing() {
                 onClick={nextStep}
                 className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors"
               >
-                Dalje
+                {t.dashboard.next}
               </button>
             ) : (
               <button
@@ -484,7 +491,7 @@ export default function AddListing() {
                 disabled={isSubmitting}
                 className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Objavljivanje...' : 'Objavi oglas'}
+                {isSubmitting ? t.dashboard.publishing : t.dashboard.publishListing}
               </button>
             )}
           </div>
