@@ -103,11 +103,6 @@ export const SEOConfigs = {
     description: 'Kreirajte besplatan Rent&Co nalog i počnite da iznajmljujete ili oglašavate resurse.',
     canonical: '/register',
   },
-  create: {
-    title: 'Dodaj oglas | Rent&Co',
-    description: 'Objavite oglas za iznajmljivanje na Rent&Co platformi. Brzo, jednostavno i besplatno.',
-    canonical: '/create',
-  },
   favorites: {
     title: 'Omiljeni oglasi | Rent&Co',
     description: 'Vaši sačuvani oglasi za iznajmljivanje na jednom mestu.',

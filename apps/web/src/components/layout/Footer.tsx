@@ -82,7 +82,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/create" className="text-sm text-gray-400 hover:text-white transition-colors">
+                <Link to="/dashboard/add-listing" className="text-sm text-gray-400 hover:text-white transition-colors">
                   {t.footer.postProduct}
                 </Link>
               </li>

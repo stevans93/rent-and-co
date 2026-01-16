@@ -85,6 +85,7 @@ export interface SearchFilters {
   location?: string;
   status?: string;
   sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
+  isFeatured?: boolean;
 }
 
 // API Response Types

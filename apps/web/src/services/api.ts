@@ -1,6 +1,17 @@
 import { cacheManager, memCache, CACHE_KEYS, CACHE_DURATIONS } from '../utils/cache';
 import type { Resource, Category, User, AuthResponse, ApiResponse, SearchFilters, PaginationParams } from '../types';
 
+// Search suggestion type
+export interface SearchSuggestion {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  image: string | null;
+  city: string | null;
+  category: string | null;
+}
+
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -200,6 +211,26 @@ export const resourcesApi = {
       key: `search_${query}_${JSON.stringify(filters)}`,
       duration: CACHE_DURATIONS.short,
     });
+  },
+
+  getSuggestions: async (query: string): Promise<SearchSuggestion[]> => {
+    if (!query || query.length < 1) {
+      return [];
+    }
+
+    try {
+      const response = await fetchWithCache<ApiResponse<SearchSuggestion[]>>(
+        `/resources/search/suggestions?q=${encodeURIComponent(query)}`,
+        {},
+        {
+          // Kraći cache za brže rezultate
+          duration: 30 * 1000, // 30 sekundi
+        }
+      );
+      return response.data || [];
+    } catch {
+      return [];
+    }
   },
 };
 

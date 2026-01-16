@@ -5,6 +5,7 @@ export { default as Layout } from './layout/Layout';
 
 // Feature Components
 export { default as SearchBar } from './SearchBar';
+export { default as HeroSection } from './HeroSection';
 
 // UI Components
 export * from './ui';

@@ -505,3 +505,61 @@ export const updateResourceStatus = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+
+/**
+ * GET /api/resources/search/suggestions
+ * Autocomplete suggestions za pretragu - brza pretraga od prvog slova
+ */
+export const getSearchSuggestions = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { q } = req.query as { q?: string };
+
+    if (!q || q.length < 1) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Escape special regex characters
+    const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Regex koji traži:
+    // 1. Reči koje POČINJU sa unetim tekstom (za brzu pretragu od prvog slova)
+    // 2. Ili sadrže uneti tekst bilo gde (za celu reč)
+    const startsWithRegex = new RegExp(`\\b${escapedQuery}`, 'i'); // Reč počinje sa...
+    const containsRegex = new RegExp(escapedQuery, 'i'); // Sadrži bilo gde
+
+    const resources = await Resource.find({
+      status: "active",
+      $or: [
+        { title: startsWithRegex },
+        { title: containsRegex },
+        { "location.city": startsWithRegex },
+      ],
+    })
+      .select("title slug pricePerDay images location")
+      .populate("categoryId", "name slug")
+      .sort({ title: 1 }) // Sortiraj po naslovu za konzistentan redosled
+      .limit(4) // Max 4 rezultata
+      .lean();
+
+    // Format suggestions
+    const suggestions = resources.map((r: any) => ({
+      id: r._id,
+      title: r.title,
+      slug: r.slug,
+      price: r.pricePerDay,
+      image: r.images?.[0]?.url || null,
+      city: r.location?.city || null,
+      category: r.categoryId?.name || null,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: suggestions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

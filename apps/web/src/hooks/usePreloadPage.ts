@@ -28,9 +28,6 @@ export function usePreloadPage() {
       case 'favorites':
         import('../pages/FavoritesPage');
         break;
-      case 'create':
-        import('../pages/CreateResourcePage');
-        break;
     }
   }, []);
 

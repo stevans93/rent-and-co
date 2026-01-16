@@ -91,6 +91,11 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
     </svg>
   ),
+  home: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  ),
 };
 
 const sidebarLinksConfig = [
@@ -427,6 +432,27 @@ export default function DashboardLayout() {
               ))}
             </div>
           )}
+
+          {/* Back to Home Link */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <Link
+              to="/"
+              className="flex items-center gap-3 pl-5 pr-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 w-full"
+              title={!sidebarOpen ? t.nav.home : undefined}
+            >
+              <span className="flex-shrink-0 w-5">{icons.home}</span>
+              <span 
+                className="whitespace-nowrap overflow-hidden"
+                style={{ 
+                  opacity: sidebarOpen ? 1 : 0,
+                  maxWidth: sidebarOpen ? '200px' : '0px',
+                  transition: 'opacity 0.4s ease-in-out, max-width 0.5s ease-in-out'
+                }}
+              >
+                {t.nav.home}
+              </span>
+            </Link>
+          </div>
 
           {/* Logout Button */}
           <div className="border-t border-gray-200 dark:border-gray-700">

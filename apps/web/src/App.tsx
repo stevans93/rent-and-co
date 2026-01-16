@@ -31,7 +31,6 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
-const CreateResourcePage = lazy(() => import('./pages/CreateResourcePage'));
 
 // Dashboard pages
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
@@ -111,11 +110,6 @@ function App() {
                 <Route path="favorites" element={
                   <Suspense fallback={<PageLoader />}>
                     <FavoritesPage />
-                  </Suspense>
-                } />
-                <Route path="create" element={
-                  <Suspense fallback={<PageLoader />}>
-                    <CreateResourcePage />
                   </Suspense>
                 } />
               </Route>

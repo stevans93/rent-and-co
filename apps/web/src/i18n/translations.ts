@@ -58,7 +58,8 @@ export const translations = {
       resources: 'Resursi',
       services: 'Usluge',
       search: 'Pretraži',
-      whatIsLoremIpsum: 'Šta je Lorem Ipsum',
+      whatIsLoremIpsum: 'Želiš da iznajmiš nešto?',
+      ctaSubtitle: 'Objavi svoj oglas besplatno i počni da zarađuješ već danas!',
       becomePartner: 'Postani partner',
     },
     // Categories
@@ -521,7 +522,8 @@ export const translations = {
       resources: 'Resources',
       services: 'Services',
       search: 'Search',
-      whatIsLoremIpsum: 'What is Lorem Ipsum',
+      whatIsLoremIpsum: 'Want to rent something out?',
+      ctaSubtitle: 'Post your ad for free and start earning today!',
       becomePartner: 'Become a partner',
     },
     // Categories
@@ -982,7 +984,8 @@ export const translations = {
       resources: 'Resurse',
       services: 'Servicii',
       search: 'Caută',
-      whatIsLoremIpsum: 'Ce este Lorem Ipsum',
+      whatIsLoremIpsum: 'Vrei să închiriezi ceva?',
+      ctaSubtitle: 'Publică-ți anunțul gratuit și începe să câștigi azi!',
       becomePartner: 'Devino partener',
     },
     categories: {
@@ -1434,7 +1437,8 @@ export const translations = {
       resources: 'Ressources',
       services: 'Services',
       search: 'Rechercher',
-      whatIsLoremIpsum: "Qu'est-ce que Lorem Ipsum",
+      whatIsLoremIpsum: "Vous voulez louer quelque chose?",
+      ctaSubtitle: "Publiez votre annonce gratuitement et commencez à gagner dès aujourd'hui!",
       becomePartner: 'Devenir partenaire',
     },
     categories: {
@@ -1886,7 +1890,8 @@ export const translations = {
       resources: 'Ressourcen',
       services: 'Dienstleistungen',
       search: 'Suchen',
-      whatIsLoremIpsum: 'Was ist Lorem Ipsum',
+      whatIsLoremIpsum: 'Möchten Sie etwas vermieten?',
+      ctaSubtitle: 'Veröffentlichen Sie Ihre Anzeige kostenlos und verdienen Sie noch heute!',
       becomePartner: 'Partner werden',
     },
     categories: {
@@ -2338,7 +2343,8 @@ export const translations = {
       resources: 'Risorse',
       services: 'Servizi',
       search: 'Cerca',
-      whatIsLoremIpsum: "Cos'è Lorem Ipsum",
+      whatIsLoremIpsum: 'Vuoi affittare qualcosa?',
+      ctaSubtitle: 'Pubblica il tuo annuncio gratuitamente e inizia a guadagnare oggi!',
       becomePartner: 'Diventa partner',
     },
     categories: {

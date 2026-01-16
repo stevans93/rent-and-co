@@ -130,7 +130,7 @@ export default function AboutPage() {
             </div>
             <div className="flex space-x-4">
               <a
-                href="/create"
+                href="/dashboard/add-listing"
                 className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white px-6 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 flex items-center"
               >
                 {t.nav.addProduct}

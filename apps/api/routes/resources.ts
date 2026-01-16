@@ -8,6 +8,7 @@ import {
   getMyResources,
   getAdminResources,
   updateResourceStatus,
+  getSearchSuggestions,
 } from "../controller/resource";
 import {
   uploadResourceImages,
@@ -19,6 +20,9 @@ import { auth, validateBody, validateQuery, promiseWrapper, upload } from "../mi
 import { createResourceSchema, updateResourceSchema, resourceQuerySchema } from "@rent-and-co/shared";
 
 const router = Router();
+
+// GET /api/resources/search/suggestions - Autocomplete suggestions (MORA BITI PRE /:slug)
+router.get("/search/suggestions", promiseWrapper(getSearchSuggestions));
 
 // GET /api/resources - Lista sa filterima
 router.get("/", validateQuery(resourceQuerySchema), promiseWrapper(getResources));
