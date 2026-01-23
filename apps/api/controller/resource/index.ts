@@ -299,7 +299,8 @@ export const getMyResources = async (req: Request, res: Response, next: NextFunc
       sort = "newest",
       page = "1",
       limit = "20",
-    } = req.query as { status?: string; sort?: string; page?: string; limit?: string };
+      search,
+    } = req.query as { status?: string; sort?: string; page?: string; limit?: string; search?: string };
 
     // Build filter - always filter by current user
     const filter: any = { ownerId: req.user._id };
@@ -307,6 +308,16 @@ export const getMyResources = async (req: Request, res: Response, next: NextFunc
     // Status filter (optional)
     if (status && status !== 'all') {
       filter.status = status;
+    }
+
+    // Search filter (by title, city, or address)
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { 'location.city': searchRegex },
+        { 'location.address': searchRegex },
+      ];
     }
 
     // Sorting

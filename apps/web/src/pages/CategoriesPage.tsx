@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage, useTheme } from '../context';
 import { SEO, SEOConfigs } from '../components/SEO';
 import type { Category } from '../types';
@@ -78,7 +79,11 @@ export default function CategoriesPage() {
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-center">
           <h1 className="text-3xl font-bold text-white">{t.categories.title}</h1>
-          <p className="text-gray-200">{t.categories.breadcrumb}</p>
+          <nav className="text-gray-200 flex items-center gap-2">
+            <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+            <span>/</span>
+            <span>{t.categories.title}</span>
+          </nav>
         </div>
       </section>
 

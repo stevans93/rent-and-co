@@ -5,8 +5,12 @@ import { getAll, getAdminUsers, updateUserRole, deleteUser } from "../controller
 import { remove } from "../controller/user/remove";
 import { upload } from "../controller/user/upload";
 import { get } from "../controller/user/get";
+import { getDashboardStats } from "../controller/user/dashboard";
 
 const router = Router();
+
+// Dashboard stats route (MORA BITI PRE /:id)
+router.get("/dashboard/stats", auth, promiseWrapper(getDashboardStats));
 
 // Admin routes
 router.get("/", auth, promiseWrapper(getAdminUsers));

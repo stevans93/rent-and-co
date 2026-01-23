@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage, useToast, useAuth } from '../../context';
+import { useDebounce } from '../../hooks';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const API_BASE = API_URL.replace('/api', '');
@@ -36,26 +37,99 @@ export default function DashboardFavorites() {
   const { t } = useLanguage();
   const { token } = useAuth();
   const { success, error: showError, info } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [favorites, setFavorites] = useState<FavoriteResource[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [removeModal, setRemoveModal] = useState<{ open: boolean; item: FavoriteResource | null }>({ open: false, item: null });
   const [removing, setRemoving] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  // Pagination from URL
+  const [currentPage, setCurrentPage] = useState(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? Math.max(1, parseInt(pageParam)) : 1;
+  });
+  const [perPage, setPerPage] = useState(() => {
+    const savedPerPage = localStorage.getItem('favoritePerPage');
+    const limitParam = searchParams.get('limit');
+    if (limitParam) return Math.max(1, parseInt(limitParam));
+    if (savedPerPage) return parseInt(savedPerPage);
+    return 10;
+  });
+  const [totalPages, setTotalPages] = useState(1);
+  const [allCategories, setAllCategories] = useState<{ _id: string; name: string; slug: string }[]>([]);
+  
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
+  // Ref to track if we're syncing from URL (to prevent loop)
+  const isSyncingFromUrl = useRef(false);
 
+  // Sync state from URL when browser back/forward is used
   useEffect(() => {
-    fetchFavorites();
-  }, [token]);
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+    const searchParam = searchParams.get('search');
+    const categoryParam = searchParams.get('category');
+    
+    const newPage = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
+    const newLimit = limitParam ? Math.max(1, parseInt(limitParam)) : (parseInt(localStorage.getItem('favoritePerPage') || '10'));
+    const newSearch = searchParam || '';
+    const newCategory = categoryParam || '';
+    
+    // Check if any value is different
+    const hasChanges = newPage !== currentPage || newLimit !== perPage || newSearch !== searchQuery || newCategory !== selectedCategory;
+    
+    if (hasChanges) {
+      isSyncingFromUrl.current = true;
+      setCurrentPage(newPage);
+      setPerPage(newLimit);
+      setSearchQuery(newSearch);
+      setSelectedCategory(newCategory);
+      // Reset the flag after a short delay to allow state updates to complete
+      setTimeout(() => {
+        isSyncingFromUrl.current = false;
+      }, 50);
+    }
+  }, [searchParams]);
 
-  const fetchFavorites = async () => {
+  // Update URL when params change (only from user actions, not from URL sync)
+  useEffect(() => {
+    // Skip if we're syncing from URL
+    if (isSyncingFromUrl.current) return;
+    
+    const params = new URLSearchParams();
+    if (currentPage > 1) params.set('page', currentPage.toString());
+    if (perPage !== 10) params.set('limit', perPage.toString());
+    if (searchQuery) params.set('search', searchQuery);
+    if (selectedCategory) params.set('category', selectedCategory);
+    
+    // Check if URL needs to be updated
+    const currentUrlPage = parseInt(searchParams.get('page') || '1');
+    const currentUrlLimit = parseInt(searchParams.get('limit') || '10');
+    const currentUrlSearch = searchParams.get('search') || '';
+    const currentUrlCategory = searchParams.get('category') || '';
+    
+    if (currentPage !== currentUrlPage || perPage !== currentUrlLimit || searchQuery !== currentUrlSearch || selectedCategory !== currentUrlCategory) {
+      setSearchParams(params);
+    }
+  }, [currentPage, perPage, searchQuery, selectedCategory, setSearchParams]);
+
+  // Fetch favorites with backend search
+  const fetchFavorites = useCallback(async () => {
     if (!token) return;
+    setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/favorites`, {
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', perPage.toString());
+      if (debouncedSearchQuery) params.set('search', debouncedSearchQuery);
+      if (selectedCategory) params.set('category', selectedCategory);
+      
+      const response = await fetch(`${API_URL}/favorites?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -65,41 +139,38 @@ export default function DashboardFavorites() {
 
       if (result.success) {
         setFavorites(result.data);
+        setTotalCount(result.pagination?.total || result.data.length);
+        setTotalPages(result.pagination?.pages || 1);
       } else {
-        showError('Greška', 'Nije moguće učitati omiljene oglase');
+        showError(t.common?.error || 'Greška', t.dashboard?.loadError || 'Nije moguće učitati omiljene oglase');
       }
     } catch (err) {
-      showError('Greška', 'Došlo je do greške prilikom učitavanja');
+      showError(t.common?.error || 'Greška', t.dashboard?.loadError || 'Došlo je do greške prilikom učitavanja');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [token, currentPage, perPage, debouncedSearchQuery, selectedCategory, showError, t]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    return [...new Set(favorites.map(f => f.categoryId?.name).filter(Boolean))];
-  }, [favorites]);
-
-  // Filter favorites
-  const filteredFavorites = useMemo(() => {
-    let result = [...favorites];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(f => 
-        f.title.toLowerCase().includes(query) ||
-        f.location.city.toLowerCase().includes(query)
-      );
+  // Fetch all categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/categories`);
+      const result = await response.json();
+      if (result.success) {
+        setAllCategories(result.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
     }
+  }, []);
 
-    if (selectedCategory) {
-      result = result.filter(f => f.categoryId?.name === selectedCategory);
-    }
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
-    return result;
-  }, [favorites, searchQuery, selectedCategory]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredFavorites.length / perPage);
-  const paginatedFavorites = filteredFavorites.slice((currentPage - 1) * perPage, currentPage * perPage);
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
 
   const handleRemove = async () => {
     if (!removeModal.item || !token) return;
@@ -116,21 +187,21 @@ export default function DashboardFavorites() {
       const result = await response.json();
 
       if (result.success) {
-        setFavorites(prev => prev.filter(f => f._id !== removeModal.item?._id));
         setRemoveModal({ open: false, item: null });
-        success('Uklonjeno', 'Oglas je uklonjen iz omiljenih');
+        success(t.dashboard?.removed || 'Uklonjeno', t.dashboard?.removed || 'Oglas je uklonjen iz omiljenih');
+        fetchFavorites(); // Refetch to update list
       } else {
-        showError('Greška', result.message || 'Nije moguće ukloniti oglas');
+        showError(t.common?.error || 'Greška', result.message || t.dashboard?.removeError || 'Nije moguće ukloniti oglas');
       }
     } catch (err) {
-      showError('Greška', 'Došlo je do greške');
+      showError(t.common?.error || 'Greška', t.common?.error || 'Došlo je do greške');
     } finally {
       setRemoving(false);
     }
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm('Da li ste sigurni da želite da uklonite sve omiljene oglase?')) return;
+    if (!window.confirm(t.dashboard?.confirmClearAll || 'Da li ste sigurni da želite da uklonite sve omiljene oglase?')) return;
     if (!token) return;
 
     try {
@@ -144,14 +215,26 @@ export default function DashboardFavorites() {
         });
       }
       setFavorites([]);
-      info('Obrisano', 'Svi omiljeni oglasi su uklonjeni');
+      setTotalCount(0);
+      info(t.dashboard?.clearAll || 'Obrisano', t.dashboard?.removedAll || 'Svi omiljeni oglasi su uklonjeni');
     } catch (err) {
-      showError('Greška', 'Došlo je do greške prilikom brisanja');
+      showError(t.common?.error || 'Greška', t.common?.error || 'Došlo je do greške prilikom brisanja');
     }
   };
 
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
+    localStorage.setItem('favoritePerPage', newPerPage.toString());
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
     setCurrentPage(1);
   };
 
@@ -162,10 +245,10 @@ export default function DashboardFavorites() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.favorites || 'Omiljeni oglasi'}</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            {favorites.length} {favorites.length === 1 ? 'sačuvan oglas' : 'sačuvanih oglasa'}
+            {totalCount} {totalCount === 1 ? (t.dashboard.savedListing || 'sačuvan oglas') : (t.dashboard.savedListings || 'sačuvanih oglasa')}
           </p>
         </div>
-        {favorites.length > 0 && (
+        {totalCount > 0 && (
           <button
             onClick={handleClearAll}
             className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2 self-start"
@@ -173,13 +256,13 @@ export default function DashboardFavorites() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Obriši sve
+            {t.dashboard.clearAll || 'Obriši sve'}
           </button>
         )}
       </div>
 
       {/* Filters */}
-      {favorites.length > 0 && (
+      {totalCount > 0 && (
         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 mb-6 border border-gray-100 dark:border-gray-800">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
@@ -190,12 +273,9 @@ export default function DashboardFavorites() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Pretraži omiljene..."
+                  placeholder={t.dashboard.searchFavorites || 'Pretraži omiljene...'}
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e85d45]/50 focus:border-[#e85d45]"
                 />
               </div>
@@ -204,15 +284,14 @@ export default function DashboardFavorites() {
             {/* Category Filter */}
             <select
               value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/50 focus:border-[#e85d45]"
             >
-              <option value="">Sve kategorije</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              <option value="">{t.dashboard.allCategories || 'Sve kategorije'}</option>
+              {allCategories.map(cat => (
+                <option key={cat._id} value={cat.name}>
+                  {(t.categories as Record<string, string>)[cat.slug] || cat.name}
+                </option>
               ))}
             </select>
           </div>
@@ -223,10 +302,12 @@ export default function DashboardFavorites() {
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800">
         <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white">
-            {searchQuery || selectedCategory ? `Pronađeno (${filteredFavorites.length})` : `Svi omiljeni (${favorites.length})`}
+            {searchQuery || selectedCategory 
+              ? `${t.dashboard.found || 'Pronađeno'} (${favorites.length})` 
+              : `${t.dashboard.allFavorites || 'Svi omiljeni'} (${totalCount})`}
           </h2>
           
-          {favorites.length > 0 && (
+          {totalCount > 0 && (
             <select
               value={perPage}
               onChange={(e) => handlePerPageChange(Number(e.target.value))}
@@ -239,16 +320,20 @@ export default function DashboardFavorites() {
           )}
         </div>
 
-        {favorites.length === 0 ? (
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e85d45] mx-auto"></div>
+          </div>
+        ) : totalCount === 0 && !searchQuery && !selectedCategory ? (
           <div className="p-8 text-center">
             <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nemate omiljenih oglasa</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.dashboard.noFavorites || 'Nemate omiljenih oglasa'}</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Pretražite oglase i kliknite na srce da biste sačuvali omiljene oglase.
+              {t.dashboard.noFavoritesDescription || 'Pretražite oglase i kliknite na srce da biste sačuvali omiljene oglase.'}
             </p>
             <Link
               to="/search"
@@ -257,13 +342,13 @@ export default function DashboardFavorites() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              Pretraži oglase
+              {t.dashboard.browseListings || 'Pretraži oglase'}
             </Link>
           </div>
-        ) : paginatedFavorites.length === 0 ? (
+        ) : favorites.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Nema rezultata za trenutne filtere.
+              {t.dashboard.noResults || 'Nema rezultata za trenutne filtere.'}
             </p>
             <button
               onClick={() => {
@@ -272,7 +357,7 @@ export default function DashboardFavorites() {
               }}
               className="text-[#e85d45] hover:underline"
             >
-              Resetuj filtere
+              {t.dashboard.resetFilters || 'Resetuj filtere'}
             </button>
           </div>
         ) : (
@@ -280,15 +365,15 @@ export default function DashboardFavorites() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-[#252525]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Oglas</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Kategorija</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Cena</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Lokacija</th>
-                  <th className="text-right px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Akcije</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.listing || 'Oglas'}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.category || 'Kategorija'}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.price || 'Cena'}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.location || 'Lokacija'}</th>
+                  <th className="text-right px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.actions || 'Akcije'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {paginatedFavorites.map((item) => (
+                {favorites.map((item) => (
                   <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors">
                     <td className="px-4 py-4">
                       <Link to={`/resources/${item.slug}`} className="flex items-center gap-3 group">
@@ -307,17 +392,19 @@ export default function DashboardFavorites() {
                         )}
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white group-hover:text-[#e85d45] transition-colors">{item.title}</p>
-                          <p className="text-xs text-gray-500">{item.status === 'active' ? 'Aktivan' : item.status}</p>
+                          <p className="text-xs text-gray-500">{item.status === 'active' ? (t.dashboard.activeStatus || 'Aktivan') : item.status}</p>
                         </div>
                       </Link>
                     </td>
                     <td className="px-4 py-4">
                       <span className="text-xs font-medium text-[#e85d45] bg-[#e85d45]/10 px-2 py-1 rounded">
-                        {item.categoryId?.name || '-'}
+                        {item.categoryId?.slug 
+                          ? ((t.categories as Record<string, string>)[item.categoryId.slug] || item.categoryId?.name || '-')
+                          : '-'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-gray-900 dark:text-white font-medium">
-                      {item.currency === 'EUR' ? '€' : item.currency}{item.pricePerDay}/dan
+                      {item.currency === 'EUR' ? '€' : item.currency}{item.pricePerDay}/{t.dashboard.perDayPrice || 'dan'}
                     </td>
                     <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
                       {item.location.city}{item.location.address && `, ${item.location.address}`}
@@ -327,7 +414,7 @@ export default function DashboardFavorites() {
                         <Link
                           to={`/resources/${item.slug}`}
                           className="p-2 text-gray-500 hover:text-[#e85d45] hover:bg-[#e85d45]/10 rounded-lg transition-colors"
-                          title="Pogledaj oglas"
+                          title={t.dashboard.viewListingTitle || 'Pogledaj oglas'}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -337,7 +424,7 @@ export default function DashboardFavorites() {
                         <button
                           onClick={() => setRemoveModal({ open: true, item })}
                           className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Ukloni iz omiljenih"
+                          title={t.dashboard.removeFromFavoritesTitle || 'Ukloni iz omiljenih'}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -356,7 +443,7 @@ export default function DashboardFavorites() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-4 border-t border-gray-100 dark:border-gray-800">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {t.dashboard.showing || 'Prikazano'} {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, filteredFavorites.length)} {t.dashboard.of || 'od'} {filteredFavorites.length}
+              {t.dashboard.showing || 'Prikazano'} {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, totalCount)} {t.dashboard.of || 'od'} {totalCount}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -402,9 +489,9 @@ export default function DashboardFavorites() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ukloni iz omiljenih</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.removeFromFavorites || 'Ukloni iz omiljenih'}</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  Da li ste sigurni da želite da uklonite "{removeModal.item?.title}" iz omiljenih?
+                  {t.dashboard.removeConfirmText || `Da li ste sigurni da želite da uklonite "${removeModal.item?.title}" iz omiljenih?`}
                 </p>
               </div>
             </div>
@@ -424,7 +511,7 @@ export default function DashboardFavorites() {
                 {removing && (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 )}
-                Ukloni
+                {t.dashboard.remove || 'Ukloni'}
               </button>
             </div>
           </div>

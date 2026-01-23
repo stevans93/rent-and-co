@@ -51,6 +51,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
 const PartnerPage = lazy(() => import('./pages/PartnerPage'));
+const ServerErrorPage = lazy(() => import('./pages/ServerErrorPage'));
 
 // Dashboard pages
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
@@ -282,6 +283,13 @@ function App() {
                   </ProtectedRoute>
                 } />
                 </Route>
+
+                {/* Server Error Page */}
+                <Route path="server-error" element={
+                  <Suspense fallback={<PublicLoader />}>
+                    <ServerErrorPage />
+                  </Suspense>
+                } />
                     </Routes>
                   </BrowserRouter>
                 </ToastProvider>

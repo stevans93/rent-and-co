@@ -906,43 +906,61 @@ export default function SearchPage() {
   // Country selection state (for languages with multiple countries)
   const [selectedCountry, setSelectedCountry] = useState('');
   
-  const [currentPage, setCurrentPage] = useState(() => {
+  const [currentPage, setCurrentPageState] = useState(() => {
     return parseInt(searchParams.get('page') || '1', 10);
   });
   
-  // Track if change came from URL (browser back/forward) to prevent circular updates
-  const isUrlSync = useRef(false);
-  
-  // Sync page from URL when browser back/forward is used
-  useEffect(() => {
-    const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
-    if (pageFromUrl !== currentPage) {
-      isUrlSync.current = true;
-      setCurrentPage(pageFromUrl);
+  // Update URL when page or filters change - called explicitly, not via useEffect
+  const updateUrl = useCallback((newPage: number, newFilters: SearchFilters) => {
+    const params = new URLSearchParams();
+    
+    if (newFilters.q) params.set('q', newFilters.q);
+    if (newFilters.category && !isCategoryRoute) params.set('category', newFilters.category);
+    if (newFilters.city) params.set('city', newFilters.city);
+    if (newFilters.minPrice) params.set('minPrice', newFilters.minPrice);
+    if (newFilters.maxPrice) params.set('maxPrice', newFilters.maxPrice);
+    if (newFilters.sort && newFilters.sort !== 'default') params.set('sort', newFilters.sort);
+    if (newPage > 1) params.set('page', String(newPage));
+    
+    const queryString = params.toString();
+    const newSearch = queryString ? `?${queryString}` : '';
+    
+    if (location.search === newSearch) return;
+    
+    if (isCategoryRoute && categorySlug) {
+      navigate(`/category/${categorySlug}${newSearch}`, { replace: false });
+    } else {
+      setSearchParams(params, { replace: false });
     }
-  }, [location.search]);
+  }, [isCategoryRoute, categorySlug, navigate, setSearchParams, location.search]);
   
-  // Sync filters from URL when browser back/forward is used
+  // Wrapper for setCurrentPage that also updates URL
+  const setCurrentPage = useCallback((page: number) => {
+    setCurrentPageState(page);
+    updateUrl(page, filters);
+  }, [updateUrl, filters]);
+  
+  // Handle browser back/forward - listen to popstate
   useEffect(() => {
-    const newFilters = {
-      q: searchParams.get('q') || '',
-      category: isCategoryRoute && categorySlug ? categorySlug : (searchParams.get('category') || ''),
-      city: searchParams.get('city') || '',
-      minPrice: searchParams.get('minPrice') || '',
-      maxPrice: searchParams.get('maxPrice') || '',
-      sort: searchParams.get('sort') || 'default',
-    };
-    
-    // Check if filters actually changed
-    const filtersChanged = Object.keys(newFilters).some(
-      key => newFilters[key as keyof SearchFilters] !== filters[key as keyof SearchFilters]
-    );
-    
-    if (filtersChanged) {
-      isUrlSync.current = true;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const pageFromUrl = parseInt(params.get('page') || '1', 10);
+      setCurrentPageState(pageFromUrl);
+      
+      const newFilters = {
+        q: params.get('q') || '',
+        category: isCategoryRoute && categorySlug ? categorySlug : (params.get('category') || ''),
+        city: params.get('city') || '',
+        minPrice: params.get('minPrice') || '',
+        maxPrice: params.get('maxPrice') || '',
+        sort: params.get('sort') || 'default',
+      };
       setFilters(newFilters);
-    }
-  }, [location.search, categorySlug, isCategoryRoute]);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isCategoryRoute, categorySlug]);
   
   // Grid layout and items per page
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(() => {
@@ -1047,53 +1065,17 @@ export default function SearchPage() {
     return cat?.name || '';
   }, [filters.category, categories]);
 
-  // Sync filters to URL - use navigate for proper browser history
-  useEffect(() => {
-    // Skip URL update if change came from browser back/forward
-    if (isUrlSync.current) {
-      isUrlSync.current = false;
-      return;
-    }
-    
-    const params = new URLSearchParams();
-    
-    if (filters.q) params.set('q', filters.q);
-    // Only add category to query params if NOT on category route
-    if (filters.category && !isCategoryRoute) params.set('category', filters.category);
-    if (filters.city) params.set('city', filters.city);
-    if (filters.minPrice) params.set('minPrice', filters.minPrice);
-    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
-    if (filters.sort && filters.sort !== 'default') params.set('sort', filters.sort);
-    if (currentPage > 1) params.set('page', String(currentPage));
-    
-    // Build the URL based on whether we're on category route or not
-    const queryString = params.toString();
-    const newSearch = queryString ? `?${queryString}` : '';
-    
-    // Skip if URL already matches (prevents duplicate history entries)
-    if (location.search === newSearch) {
-      return;
-    }
-    
-    if (isCategoryRoute && categorySlug) {
-      // On /category/:slug route, update only query params
-      const newPath = `/category/${categorySlug}${newSearch}`;
-      navigate(newPath, { replace: false });
-    } else {
-      // On /search route, use setSearchParams
-      setSearchParams(params, { replace: false });
-    }
-  }, [filters, currentPage, setSearchParams, isCategoryRoute, categorySlug, navigate]);
-
-  // Filter change handler
+  // Filter change handler - updates filters and URL
   const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page on filter change
-  }, []);
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    setCurrentPageState(1);
+    updateUrl(1, newFilters);
+  }, [filters, updateUrl]);
 
   // Search handler - navigate to /search and clear category if on category route
   const handleSearch = useCallback(() => {
-    setCurrentPage(1);
+    setCurrentPageState(1);
     setIsFilterDrawerOpen(false);
     
     // If on category route, navigate to clean /search
@@ -1114,17 +1096,19 @@ export default function SearchPage() {
 
   // Reset filters
   const handleReset = useCallback(() => {
-    setFilters({
+    const resetFilters = {
       q: '',
       category: '',
       city: '',
       minPrice: '',
       maxPrice: '',
       sort: 'default',
-    });
+    };
+    setFilters(resetFilters);
     setSelectedCountry('');
-    setCurrentPage(1);
-  }, []);
+    setCurrentPageState(1);
+    updateUrl(1, resetFilters);
+  }, [updateUrl]);
 
   // Save search (store in localStorage)
   const handleSaveSearch = useCallback(() => {
@@ -1144,10 +1128,11 @@ export default function SearchPage() {
   // Load saved search
   const handleLoadSearch = useCallback((savedFilters: SearchFilters) => {
     setFilters(savedFilters);
-    setCurrentPage(1);
+    setCurrentPageState(1);
+    updateUrl(1, savedFilters);
     setIsFilterDrawerOpen(false);
     success('Pretraga učitana', 'Kliknite "Pretraži" za prikaz rezultata');
-  }, [success]);
+  }, [success, updateUrl]);
 
   const sortOptions = [
     { value: 'default', label: 'Podrazumevano' },
@@ -1362,8 +1347,10 @@ export default function SearchPage() {
                 <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Greška pri učitavanju</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Pokušajte ponovo.'}</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mb-4">{t.common.loadingError}</p>
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  {t.common.tryAgain}
+                </Button>
               </div>
             )}
 
@@ -1377,20 +1364,6 @@ export default function SearchPage() {
                 {[...Array(itemsPerPage > 12 ? 12 : itemsPerPage)].map((_, i) => (
                   <ResourceCardSkeleton key={i} />
                 ))}
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!isLoading && !isError && resources.length === 0 && (
-              <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                <svg className="w-20 h-20 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.common.noResults}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Pokušajte sa drugim filterima ili pretragom.</p>
-                <Button variant="outline" onClick={handleReset}>
-                  Resetuj filtere
-                </Button>
               </div>
             )}
 

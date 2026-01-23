@@ -1,5 +1,24 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, useLanguage } from '../../context';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface DashboardStats {
+  activeListings: number;
+  totalViews: number;
+  favorites: number;
+  conversionRate: number;
+}
+
+interface ActivityItem {
+  type: string;
+  title: string;
+  resourceTitle: string;
+  resourceSlug: string;
+  senderName: string;
+  createdAt: string;
+}
 
 // Stat Card Component
 function StatCard({ 
@@ -94,22 +113,62 @@ function QuickActionCard({
 }
 
 export default function DashboardOverview() {
-  useAuth(); // Will be used for user-specific data
+  const { token } = useAuth();
   const { t } = useLanguage();
 
-  // Mock data - will be replaced with real API calls
-  const stats = {
-    activeListings: 12,
-    totalViews: 1234,
-    favorites: 56,
-    conversionRate: 4.5,
-  };
+  const [stats, setStats] = useState<DashboardStats>({
+    activeListings: 0,
+    totalViews: 0,
+    favorites: 0,
+    conversionRate: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const recentActivity = [
-    { title: t.dashboard.newView, description: 'Luksuzan stan u centru', time: t.dashboard.minutesAgo },
-    { title: t.dashboard.addedToFavorites, description: 'Porodična kuća sa baštom', time: t.dashboard.hourAgo },
-    { title: t.dashboard.newMessage, description: 'Moderni kancelarijski prostor', time: t.dashboard.hoursAgo },
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/user/dashboard/stats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setStats(result.data.stats);
+          setRecentActivity(result.data.recentActivity);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [token]);
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) {
+      return `${diffMins} ${t.dashboard.minutesAgo}`;
+    } else if (diffHours < 24) {
+      return `${diffHours} ${t.dashboard.hoursAgo}`;
+    } else {
+      return `${diffDays} ${t.dashboard.daysAgo || 'dana'}`;
+    }
+  };
 
   return (
     <div>
@@ -128,9 +187,7 @@ export default function DashboardOverview() {
             </svg>
           }
           label={t.dashboard.activeListings}
-          value={stats.activeListings}
-          change="+2"
-          changeLabel={t.dashboard.thisMonth}
+          value={isLoading ? '-' : stats.activeListings}
         />
         <StatCard
           icon={
@@ -140,9 +197,7 @@ export default function DashboardOverview() {
             </svg>
           }
           label={t.dashboard.totalViews}
-          value={stats.totalViews.toLocaleString()}
-          change="+15%"
-          changeLabel={t.dashboard.lastWeek}
+          value={isLoading ? '-' : stats.totalViews.toLocaleString()}
         />
         <StatCard
           icon={
@@ -151,9 +206,7 @@ export default function DashboardOverview() {
             </svg>
           }
           label={t.dashboard.favorites}
-          value={stats.favorites}
-          change="+8"
-          changeLabel={t.dashboard.newOnes}
+          value={isLoading ? '-' : stats.favorites}
         />
         <StatCard
           icon={
@@ -162,9 +215,7 @@ export default function DashboardOverview() {
             </svg>
           }
           label={t.dashboard.conversion}
-          value={`${stats.conversionRate}%`}
-          change="+0.5%"
-          changeLabel={t.dashboard.improvement}
+          value={isLoading ? '-' : `${stats.conversionRate}%`}
         />
       </div>
 
@@ -172,9 +223,22 @@ export default function DashboardOverview() {
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 mb-8">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h2>
         <div>
-          {recentActivity.map((activity, index) => (
-            <ActivityItem key={index} {...activity} />
-          ))}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-700 border-t-[#e85d45] rounded-full animate-spin"></div>
+            </div>
+          ) : recentActivity.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t.dashboard.noRecentActivity || 'Nema nedavne aktivnosti'}</p>
+          ) : (
+            recentActivity.map((activity, index) => (
+              <ActivityItem 
+                key={index} 
+                title={activity.type === 'new_message' ? t.dashboard.newMessage : activity.title}
+                description={`${activity.resourceTitle} - ${activity.senderName}`}
+                time={formatTimeAgo(activity.createdAt)}
+              />
+            ))
+          )}
         </div>
       </div>
 
@@ -209,7 +273,7 @@ export default function DashboardOverview() {
           }
           title={t.dashboard.manageListings}
           description={t.dashboard.editAndUpdate}
-          to="/favorites"
+          to="/dashboard/favorites"
         />
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage, useToast, useAuth } from '../context';
 import { Button } from '../components';
 import { SEO, SEOConfigs } from '../components/SEO';
+import { PublicLoader } from '../components/loaders';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const API_BASE = API_URL.replace('/api', '');
@@ -39,17 +40,30 @@ export default function FavoritesPage() {
   const { success, error: showError } = useToast();
   
   const [favorites, setFavorites] = useState<FavoriteResource[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   
   const isAuthenticated = !!user && !!token;
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchFavorites();
+    } else {
+      setIsLoading(false);
     }
   }, [isAuthenticated, token]);
 
   const fetchFavorites = async () => {
     if (!token) return;
+
+    setIsLoading(true);
+    setHasError(false);
+
+    // Timeout after 10 seconds
+    const timeoutId = setTimeout(() => {
+      setIsLoading(false);
+      setHasError(true);
+    }, 10000);
 
     try {
       const response = await fetch(`${API_URL}/favorites`, {
@@ -58,13 +72,20 @@ export default function FavoritesPage() {
         },
       });
 
+      clearTimeout(timeoutId);
       const result = await response.json();
 
       if (result.success) {
         setFavorites(result.data);
+      } else {
+        setHasError(true);
       }
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Error fetching favorites:', err);
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,23 +131,41 @@ export default function FavoritesPage() {
     );
   }
 
+  // Loading state - full page loader
+  if (isLoading) {
+    return <PublicLoader />;
+  }
+
+  // Error state - full page error
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#121212]">
+        <div className="text-center py-16 px-8">
+          <svg className="w-20 h-20 mx-auto text-red-500 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">{t.common.loadingError}</h3>
+          <Button onClick={fetchFavorites} size="lg">
+            {t.common.tryAgain}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <SEO {...SEOConfigs.favorites} />
       
       <h1 className="text-3xl font-bold mb-2">{t.favorites.title}</h1>
-      <p className="text-gray-500 mb-8">{t.favorites.breadcrumb}</p>
+      <nav className="text-gray-500 flex items-center gap-2 mb-8">
+        <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+        <span>/</span>
+        <span>{t.favorites.title}</span>
+      </nav>
 
-      {favorites.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">💔</div>
-          <h2 className="text-2xl font-bold mb-2">{t.favorites.empty}</h2>
-          <p className="text-gray-500 mb-6">{t.favorites.emptyDescription}</p>
-          <Link to="/search">
-            <Button size="lg">{t.favorites.searchResources}</Button>
-          </Link>
-        </div>
-      ) : (
+      {/* Results Grid */}
+      {favorites.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map(resource => (
             <div 

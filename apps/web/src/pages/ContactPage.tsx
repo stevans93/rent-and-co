@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage, useTheme, useToast } from '../context';
 import { SEO, SEOConfigs } from '../components/SEO';
 
@@ -47,7 +48,11 @@ export default function ContactPage() {
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-center">
           <h1 className="text-3xl font-bold text-white">{t.contactPage.title}</h1>
-          <p className="text-gray-200">{t.contactPage.breadcrumb}</p>
+          <nav className="text-gray-200 flex items-center gap-2">
+            <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+            <span>/</span>
+            <span>{t.contactPage.title}</span>
+          </nav>
         </div>
       </section>
 
@@ -149,14 +154,23 @@ export default function ContactPage() {
               </form>
             </div>
 
-            {/* Info */}
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{t.home.whatIsLoremIpsum}</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-8">
-                {t.home.heroSubtitle}
+            {/* Info & Map */}
+            <div className="flex flex-col h-full">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Naša lokacija</h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Kneza Miloša 50, Svilajnac, Srbija
               </p>
-              <div className="bg-gray-200 dark:bg-[#252538] h-64 rounded-xl">
-                {/* Map placeholder */}
+              <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2853.8876!2d21.1963!3d44.2277!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4754df9f8a9dc77d%3A0x5f3f3f3f3f3f3f3f!2sKneza%20Milo%C5%A1a%2050%2C%20Svilajnac!5e0!3m2!1ssr!2srs!4v1706012345678!5m2!1ssr!2srs"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, minHeight: '300px' }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Lokacija - Kneza Miloša 50, Svilajnac"
+                ></iframe>
               </div>
             </div>
           </div>

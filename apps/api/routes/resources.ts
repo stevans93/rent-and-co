@@ -16,7 +16,7 @@ import {
   updateResourceImage,
   reorderResourceImages,
 } from "../controller/resource/images";
-import { auth, validateBody, validateQuery, promiseWrapper, upload } from "../middleware";
+import { auth, validateBody, validateQuery, promiseWrapper, upload, compressImages } from "../middleware";
 import { createResourceSchema, updateResourceSchema, resourceQuerySchema } from "@rent-and-co/shared";
 
 const router = Router();
@@ -52,8 +52,8 @@ router.delete("/:id", auth, promiseWrapper(deleteResource));
 // Image Routes
 // ==========================================
 
-// POST /api/resources/:id/images - Upload images
-router.post("/:id/images", auth, upload.array("images", 10), promiseWrapper(uploadResourceImages));
+// POST /api/resources/:id/images - Upload images (with compression)
+router.post("/:id/images", auth, upload.array("images", 10), compressImages, promiseWrapper(uploadResourceImages));
 
 // DELETE /api/resources/:id/images/:imageIndex - Delete image
 router.delete("/:id/images/:imageIndex", auth, promiseWrapper(deleteResourceImage));

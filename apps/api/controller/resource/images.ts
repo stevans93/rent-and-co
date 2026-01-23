@@ -4,16 +4,12 @@ import { NotFoundError, ForbiddenError, BadRequestError } from "../../utils/erro
 import fs from "fs";
 import path from "path";
 
-interface AuthRequest extends Request {
-  userId?: string;
-}
-
 /**
  * POST /api/resources/:id/images
  * Upload images for a resource
  */
 export const uploadResourceImages = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -38,7 +34,7 @@ export const uploadResourceImages = async (
     }
 
     // Check ownership
-    if (resource.ownerId.toString() !== req.userId) {
+    if (resource.ownerId.toString() !== req.user?._id) {
       // Delete uploaded files
       files.forEach((file) => {
         if (fs.existsSync(file.path)) {
@@ -82,7 +78,7 @@ export const uploadResourceImages = async (
  * Delete a specific image from a resource
  */
 export const deleteResourceImage = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -97,7 +93,7 @@ export const deleteResourceImage = async (
     }
 
     // Check ownership
-    if (resource.ownerId.toString() !== req.userId) {
+    if (resource.ownerId.toString() !== req.user?._id) {
       throw new ForbiddenError("Nemate dozvolu za ovu akciju");
     }
 
@@ -143,7 +139,7 @@ export const deleteResourceImage = async (
  * Update image alt text or order
  */
 export const updateResourceImage = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -159,7 +155,7 @@ export const updateResourceImage = async (
     }
 
     // Check ownership
-    if (resource.ownerId.toString() !== req.userId) {
+    if (resource.ownerId.toString() !== req.user?._id) {
       throw new ForbiddenError("Nemate dozvolu za ovu akciju");
     }
 
@@ -195,7 +191,7 @@ export const updateResourceImage = async (
  * Reorder images
  */
 export const reorderResourceImages = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -214,7 +210,7 @@ export const reorderResourceImages = async (
     }
 
     // Check ownership
-    if (resource.ownerId.toString() !== req.userId) {
+    if (resource.ownerId.toString() !== req.user?._id) {
       throw new ForbiddenError("Nemate dozvolu za ovu akciju");
     }
 

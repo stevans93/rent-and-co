@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useLanguage, useTheme } from '../context';
 import { SEO, SEOConfigs } from '../components/SEO';
 
@@ -31,7 +32,11 @@ export default function AboutPage() {
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-center">
           <h1 className="text-3xl font-bold text-white">{t.about.title}</h1>
-          <p className="text-gray-200">{t.about.breadcrumb}</p>
+          <nav className="text-gray-200 flex items-center gap-2">
+            <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+            <span>/</span>
+            <span>{t.about.title}</span>
+          </nav>
         </div>
       </section>
 
@@ -143,12 +148,12 @@ export default function AboutPage() {
                   />
                 </svg>
               </a>
-              <a
-                href="/contact"
+              <Link
+                to="/partner"
                 className="bg-[#1a1a1a] dark:bg-[#e85d45] text-white px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-[#d14d35]"
               >
                 {t.home.becomePartner}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -4,9 +4,13 @@
  * 
  * TESTING: Duration set to 3 seconds - change back to 800ms for production
  */
+import { useLanguage } from '../../context';
+
 export const PUBLIC_LOADER_DURATION = 3000; // 3 seconds for testing
 
 export default function PublicLoader() {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#121212]">
       <div className="flex flex-col items-center">
@@ -63,7 +67,7 @@ export default function PublicLoader() {
         
         {/* Loading text */}
         <p className="mt-3 text-gray-500 dark:text-gray-400 text-sm">
-          Učitavanje...
+          {t.common.loading}
         </p>
       </div>
 

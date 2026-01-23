@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom';
 import { useLanguage, useAuth, useFavorites } from '../../context';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', '');
+
+// Helper to get full image URL
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
 
 export interface Resource {
   id: number | string;
@@ -93,7 +101,7 @@ export default function ResourceCard({
       <div className="relative">
         {resource.image ? (
           <img 
-            src={resource.image} 
+            src={getImageUrl(resource.image)} 
             alt={imageAlt}
             className="w-full h-48 object-cover dark-image"
             loading="lazy"

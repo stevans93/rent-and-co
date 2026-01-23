@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom';
 import { useAuth, useLanguage } from '../../context';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', '');
+
+// Helper to get full image URL
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
 
 interface Resource {
   _id: string;
@@ -281,7 +289,7 @@ export default function AdminAllListings() {
                     <div className="flex items-center gap-3">
                       {resource.images[0] ? (
                         <img
-                          src={resource.images[0].url}
+                          src={getImageUrl(resource.images[0].url)}
                           alt={resource.title}
                           className="w-12 h-12 rounded-lg object-cover"
                         />

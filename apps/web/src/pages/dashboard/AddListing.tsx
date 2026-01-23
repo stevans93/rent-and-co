@@ -307,13 +307,19 @@ export default function AddListing() {
           formData.append('images', image);
         });
 
-        await fetch(`${API_URL}/resources/${resourceId}/images`, {
+        const imageResponse = await fetch(`${API_URL}/resources/${resourceId}/images`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
           },
           body: formData,
         });
+        
+        if (!imageResponse.ok) {
+          console.error('Image upload failed:', await imageResponse.text());
+        } else {
+          console.log('Images uploaded successfully');
+        }
       }
 
       // Navigate to my listings
@@ -337,16 +343,16 @@ export default function AddListing() {
   ];
 
   const rentalTypes = [
-    { value: 'daily', label: 'Po danu' },
-    { value: 'hourly', label: 'Po satu' },
-    { value: 'weekly', label: 'Nedeljno' },
-    { value: 'monthly', label: 'Mesečno' },
+    { value: 'daily', label: t.dashboard.perDay || 'Po danu' },
+    { value: 'hourly', label: t.dashboard.perHour || 'Po satu' },
+    { value: 'weekly', label: t.dashboard.perWeek || 'Nedeljno' },
+    { value: 'monthly', label: t.dashboard.perMonth || 'Mesečno' },
   ];
 
   const listingTypes = [
-    { value: 'active', label: 'Izdajem' },
-    { value: 'menjam', label: 'Menjam' },
-    { value: 'poklanjam', label: 'Poklanjam' },
+    { value: 'active', label: t.dashboard.forRent },
+    { value: 'menjam', label: t.dashboard.forExchange },
+    { value: 'poklanjam', label: t.dashboard.forFree },
   ];
 
   return (
@@ -423,7 +429,7 @@ export default function AddListing() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tip oglasa *
+                    {t.dashboard.listingType} *
                   </label>
                   <select
                     {...register('status')}
@@ -546,7 +552,7 @@ export default function AddListing() {
               {/* Country Select */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Država *
+                  {t.dashboard.country} *
                 </label>
                 <select
                   value={selectedCountry}
@@ -580,7 +586,7 @@ export default function AddListing() {
                     }}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
-                    <option value="">Izaberite grad</option>
+                    <option value="">{t.dashboard.selectCity}</option>
                     {getCitiesForCountry(selectedCountry).map(city => (
                       <option key={city.name} value={city.name}>{city.name}</option>
                     ))}
@@ -598,7 +604,7 @@ export default function AddListing() {
                     disabled={!selectedCity || getMunicipalitiesForCity(selectedCountry, selectedCity).length === 0}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Izaberite opštinu</option>
+                    <option value="">{t.dashboard.selectMunicipality}</option>
                     {getMunicipalitiesForCity(selectedCountry, selectedCity).map(m => (
                       <option key={m.name} value={m.name}>{m.name}</option>
                     ))}

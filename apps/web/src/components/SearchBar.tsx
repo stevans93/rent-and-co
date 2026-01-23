@@ -52,9 +52,23 @@ export default function SearchBar({ onSearch, onQueryChange, initialQuery = '', 
 
   // Brži debounce - 150ms umesto 300ms
   const debouncedQuery = useDebounce(query, 150);
+  
+  // Track the last query we sent to parent to prevent duplicate calls
+  const lastSentQuery = useRef<string | null>(null);
 
   // Call onQueryChange when debounced query changes (for live search)
+  // Skip if query hasn't actually changed from what we last sent
   useEffect(() => {
+    // Skip if this is the same query we already sent (including initial empty string)
+    if (lastSentQuery.current === debouncedQuery) {
+      return;
+    }
+    // Skip initial mount - don't notify parent of the initial value
+    if (lastSentQuery.current === null) {
+      lastSentQuery.current = debouncedQuery;
+      return;
+    }
+    lastSentQuery.current = debouncedQuery;
     if (onQueryChange) {
       onQueryChange(debouncedQuery);
     }

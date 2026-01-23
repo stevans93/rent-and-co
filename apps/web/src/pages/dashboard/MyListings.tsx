@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth, useLanguage, useToast } from '../../context';
+import { useDebounce } from '../../hooks';
 
 interface Listing {
   _id: string;
@@ -41,15 +42,30 @@ export default function MyListings() {
   const { token } = useAuth();
   const { t } = useLanguage();
   const { success, error: showError } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search for 300ms
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; listing: Listing | null }>({ open: false, listing: null });
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  // Get perPage from localStorage, default to 10
+  const getStoredPerPage = () => {
+    const stored = localStorage.getItem('myListingsPerPage');
+    return stored ? parseInt(stored, 10) : 10;
+  };
+
+  // Pagination state - read from URL params, fallback to stored/default values
+  const [currentPage, setCurrentPage] = useState(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
+  const [perPage, setPerPage] = useState(() => {
+    const limitParam = searchParams.get('limit');
+    return limitParam ? parseInt(limitParam, 10) : getStoredPerPage();
+  });
   const [pagination, setPagination] = useState<PaginationData>({ total: 0, page: 1, limit: 10, pages: 1 });
 
   // Close menu on click outside
@@ -83,7 +99,35 @@ export default function MyListings() {
 
   useEffect(() => {
     fetchMyListings();
-  }, [token, currentPage, perPage]);
+  }, [token, currentPage, perPage, debouncedSearchQuery]);
+
+  // Sync URL params when pagination changes
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    if (currentPage > 1) {
+      newParams.set('page', currentPage.toString());
+    }
+    if (perPage !== getStoredPerPage()) {
+      newParams.set('limit', perPage.toString());
+    }
+    setSearchParams(newParams, { replace: false });
+  }, [currentPage, perPage]);
+
+  // Listen to URL changes (browser back/forward)
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+    
+    const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+    const newLimit = limitParam ? parseInt(limitParam, 10) : getStoredPerPage();
+    
+    if (newPage !== currentPage) {
+      setCurrentPage(newPage);
+    }
+    if (newLimit !== perPage) {
+      setPerPage(newLimit);
+    }
+  }, [searchParams]);
 
   const fetchMyListings = async () => {
     if (!token) return;
@@ -92,6 +136,9 @@ export default function MyListings() {
       const params = new URLSearchParams();
       params.append('page', currentPage.toString());
       params.append('limit', perPage.toString());
+      if (debouncedSearchQuery.trim()) {
+        params.append('search', debouncedSearchQuery.trim());
+      }
       
       const response = await fetch(`${API_URL}/resources/my?${params}`, {
         headers: {
@@ -168,6 +215,8 @@ export default function MyListings() {
   };
 
   const handlePerPageChange = (newPerPage: number) => {
+    // Save to localStorage for persistence
+    localStorage.setItem('myListingsPerPage', newPerPage.toString());
     setPerPage(newPerPage);
     setCurrentPage(1);
   };
@@ -193,19 +242,40 @@ export default function MyListings() {
 
       {/* Listings Table */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900 dark:text-white">{t.dashboard.allListings} ({pagination.total})</h2>
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <h2 className="font-semibold text-gray-900 dark:text-white">
+            {searchQuery ? `${t.dashboard.search} (${pagination.total})` : `${t.dashboard.allListings} (${pagination.total})`}
+          </h2>
           
-          {/* Per Page */}
-          <select
-            value={perPage}
-            onChange={(e) => handlePerPageChange(Number(e.target.value))}
-            className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
-          >
-            <option value={5}>5 {t.dashboard.perPage}</option>
-            <option value={10}>10 {t.dashboard.perPage}</option>
-            <option value={15}>15 {t.dashboard.perPage}</option>
-          </select>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            {/* Search Bar */}
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t.dashboard.searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full sm:w-64 pl-9 pr-4 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20 focus:border-[#e85d45]"
+              />
+            </div>
+
+            {/* Per Page */}
+            <select
+              value={perPage}
+              onChange={(e) => handlePerPageChange(Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
+            >
+              <option value={5}>5 {t.dashboard.perPage}</option>
+              <option value={10}>10 {t.dashboard.perPage}</option>
+              <option value={15}>15 {t.dashboard.perPage}</option>
+            </select>
+          </div>
         </div>
 
         {listings.length === 0 ? (
@@ -224,6 +294,22 @@ export default function MyListings() {
               </svg>
               {t.dashboard.addListing}
             </Link>
+          </div>
+        ) : listings.length === 0 && searchQuery ? (
+          <div className="p-8 text-center">
+            <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.dashboard.noListingsFound}</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {t.common.noResults} "{searchQuery}"
+            </p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-[#e85d45] hover:text-[#d54d35] font-medium transition-colors"
+            >
+              {t.dashboard.clearSearch || 'Obriši pretragu'}
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto overflow-y-visible">
