@@ -56,6 +56,7 @@ export const categorySchema = z.object({
 export const locationSchema = z.object({
   country: z.string().default('Srbija'),
   city: z.string().min(2, 'Grad je obavezan'),
+  municipality: z.string().optional(),
   address: z.string().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
@@ -90,13 +91,13 @@ export const resourceSchema = z.object({
   slug: z.string(),
   description: z.string().min(20, 'Opis mora imati najmanje 20 karaktera'),
   categoryId: z.string(),
-  pricePerDay: z.number().positive('Cena mora biti pozitivan broj'),
+  pricePerDay: z.number().min(0, 'Cena ne može biti negativna').optional(),
   currency: z.enum(['EUR', 'RSD', 'USD']).default('EUR'),
   isFeatured: z.boolean().default(false),
-  status: z.enum(['active', 'inactive', 'pending', 'rented']).default('pending'),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).default('pending'),
   options: z.array(z.string()).optional(),
   location: locationSchema,
-  images: z.array(imageSchema).min(1, 'Najmanje jedna slika je obavezna'),
+  images: z.array(imageSchema).optional(),
   extraInfo: z.array(extraInfoSchema).optional(),
   ownerId: z.string(),
   views: z.number().default(0),
@@ -109,17 +110,19 @@ export const createResourceSchema = z.object({
   title: z.string().min(5, 'Naslov mora imati najmanje 5 karaktera').max(100, 'Naslov može imati maksimalno 100 karaktera'),
   description: z.string().min(20, 'Opis mora imati najmanje 20 karaktera').max(5000, 'Opis može imati maksimalno 5000 karaktera'),
   categoryId: z.string().min(1, 'Kategorija je obavezna'),
-  pricePerDay: z.number().positive('Cena mora biti pozitivan broj'),
+  pricePerDay: z.number().min(0, 'Cena ne može biti negativna').optional().default(0),
   currency: z.enum(['EUR', 'RSD', 'USD']).default('EUR'),
+  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam']).default('active'),
+  rentalType: z.string().optional(),
   options: z.array(z.string()).optional(),
   location: locationSchema,
-  images: z.array(imageSchema).min(1, 'Najmanje jedna slika je obavezna').max(10, 'Maksimalno 10 slika'),
+  images: z.array(imageSchema).optional(),
   extraInfo: z.array(extraInfoSchema).optional(),
 });
 
 // Update Resource DTO
 export const updateResourceSchema = createResourceSchema.partial().extend({
-  status: z.enum(['active', 'inactive', 'pending', 'rented']).optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).optional(),
   isFeatured: z.boolean().optional(),
 });
 
@@ -137,7 +140,7 @@ export const resourceQuerySchema = z.object({
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   options: z.array(z.string()).or(z.string().transform(s => s.split(','))).optional(),
-  status: z.enum(['active', 'inactive', 'pending', 'rented']).optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).optional(),
   isFeatured: z.coerce.boolean().optional(),
   ownerId: z.string().optional(),
   

@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useLanguage } from '../context';
+import { useLanguage, useAuth, useFavorites } from '../context';
 import { InquiryForm } from '../components/InquiryForm';
 import { SEO, getResourceDetailTitle, getResourceDetailDescription } from '../components/SEO';
 import { ProductSchema, BreadcrumbSchema } from '../components/SchemaOrg';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', '');
+
+// Helper to get full image URL
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
 
 interface ResourceDetail {
   _id: string;
@@ -42,17 +52,35 @@ interface ResourceDetail {
 
 export default function ResourceDetailPage() {
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth();
+  const { isFavorite: checkIsFavorite, toggleFavorite } = useFavorites();
   const { slug } = useParams();
   const [resource, setResource] = useState<ResourceDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [similarResources, setSimilarResources] = useState<ResourceDetail[]>([]);
+
+  // Check if resource is in favorites using global context
+  const isFavorite = resource ? checkIsFavorite(resource._id) : false;
+
+  // Toggle favorite using global context
+  const handleFavoriteToggle = async () => {
+    if (!isAuthenticated || !resource || isTogglingFavorite) return;
+
+    setIsTogglingFavorite(true);
+    try {
+      await toggleFavorite(resource._id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
 
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        setLoading(true);
         setError(null);
         
         const response = await fetch(`http://localhost:5000/api/resources/${slug}`);
@@ -80,8 +108,6 @@ export default function ResourceDetailPage() {
       } catch (err) {
         console.error('Error fetching resource:', err);
         setError('Greška pri učitavanju resursa');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -89,14 +115,6 @@ export default function ResourceDetailPage() {
       fetchResource();
     }
   }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e85d45]"></div>
-      </div>
-    );
-  }
 
   if (error || !resource) {
     return (
@@ -111,7 +129,7 @@ export default function ResourceDetailPage() {
     );
   }
 
-  const mainImage = resource.images[selectedImage]?.url || resource.images[0]?.url || '';
+  const mainImage = getImageUrl(resource.images[selectedImage]?.url || resource.images[0]?.url || '');
   const otherImages = resource.images.filter((_, index) => index !== selectedImage);
 
   // SEO data
@@ -120,7 +138,7 @@ export default function ResourceDetailPage() {
   const breadcrumbItems = [
     { name: t.nav.home, url: '/' },
     { name: t.nav.categories, url: '/categories' },
-    { name: resource.categoryId?.name || '', url: `/search?category=${resource.categoryId?.slug}` },
+    { name: resource.categoryId?.name || '', url: `/category/${resource.categoryId?.slug}` },
     { name: resource.title, url: `/resources/${resource.slug}` },
   ];
 
@@ -138,7 +156,7 @@ export default function ResourceDetailPage() {
       <ProductSchema
         name={resource.title}
         description={resource.description}
-        image={resource.images.map(img => img.url)}
+        image={resource.images.map(img => getImageUrl(img.url))}
         price={resource.pricePerDay}
         priceCurrency={resource.currency === '€' ? 'EUR' : 'RSD'}
         availability="InStock"
@@ -156,7 +174,7 @@ export default function ResourceDetailPage() {
         {' / '}
         <Link to="/categories" className="hover:text-[#e85d45]">{t.nav.categories}</Link>
         {' / '}
-        <Link to={`/search?category=${resource.categoryId?.slug}`} className="hover:text-[#e85d45]">
+        <Link to={`/category/${resource.categoryId?.slug}`} className="hover:text-[#e85d45]">
           {resource.categoryId?.name}
         </Link>
         {' / '}
@@ -184,15 +202,23 @@ export default function ResourceDetailPage() {
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
-          <button 
-            className="p-2 border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300 transition-colors" 
-            title="Dodaj u favorite"
-            aria-label="Sačuvaj u favorite"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
+          {isAuthenticated && (
+            <button 
+              onClick={handleFavoriteToggle}
+              disabled={isTogglingFavorite}
+              className={`p-2 border dark:border-dark-border rounded-lg transition-colors ${
+                isFavorite 
+                  ? 'bg-[#e85d45]/10 border-[#e85d45] text-[#e85d45]' 
+                  : 'hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300'
+              } ${isTogglingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+              aria-label={isFavorite ? 'Ukloni iz favorita' : 'Sačuvaj u favorite'}
+            >
+              <svg className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          )}
           <button 
             className="p-2 border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300 transition-colors" 
             title="Podeli"
@@ -237,7 +263,7 @@ export default function ResourceDetailPage() {
         {otherImages.slice(0, 4).map((image, index) => (
           <div key={index} className="relative">
             <img
-              src={image.url}
+              src={getImageUrl(image.url)}
               alt={`${resource.title} — detalj ${index + 1}`}
               className="w-full h-[120px] md:h-[195px] object-cover rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setSelectedImage(resource.images.findIndex(img => img.url === image.url))}
@@ -399,7 +425,7 @@ export default function ResourceDetailPage() {
               >
                 <div className="relative">
                   <img
-                    src={similar.images[0]?.url || ''}
+                    src={getImageUrl(similar.images[0]?.url || '')}
                     alt={similar.title}
                     className="w-full h-48 object-cover"
                   />

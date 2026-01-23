@@ -24,7 +24,6 @@ export default function DashboardAnalytics() {
   const { token } = useAuth();
   const { t } = useLanguage();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
@@ -51,19 +50,12 @@ export default function DashboardAnalytics() {
         { date: '2024-01-07', views: 48 },
       ],
     });
-    setLoading(false);
   }, [token, period]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e85d45]"></div>
-      </div>
-    );
-  }
-
   if (!analytics) {
-    return <div>{t.dashboard.noDataAvailable}</div>;
+    return (
+      <div>{t.dashboard.noDataAvailable}</div>
+    );
   }
 
   const maxViews = Math.max(...analytics.viewsByDay.map(d => d.views));

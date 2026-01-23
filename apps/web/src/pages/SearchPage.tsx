@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useLanguage } from '../context';
-import { useResources, useCategories, useDebounce } from '../hooks';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSearchParams, useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLanguage, useToast } from '../context';
+import { useResources, useCategories, useDebounce, useMinimumLoading } from '../hooks';
 import { SearchBar, ResourceCard, Pagination, Button, Input, Select, Resource } from '../components';
+import CustomSelect from '../components/ui/CustomSelect';
 import { SEO, SEOConfigs } from '../components/SEO';
 
 // ============ Skeleton Components ============
@@ -113,6 +114,15 @@ function FilterDrawer({ isOpen, onClose, children }: FilterDrawerProps) {
   );
 }
 
+// ============ Saved Searches Types ============
+
+interface SavedSearch {
+  id: number;
+  filters: SearchFilters;
+  name: string;
+  date: string;
+}
+
 // ============ Filters Sidebar Content ============
 
 interface FiltersContentProps {
@@ -121,10 +131,486 @@ interface FiltersContentProps {
   onSearch: () => void;
   onReset: () => void;
   onSaveSearch: () => void;
+  onLoadSearch: (savedFilters: SearchFilters) => void;
   categories: Array<{ id?: string | number; _id?: string; name: string; slug: string }>;
   isLoadingCategories: boolean;
   t: any;
+  language: string;
+  selectedCountry: string;
+  onCountryChange: (country: string) => void;
+  savedSearchesVersion: number; // Trigger refresh when this changes
 }
+
+// ============ City/Country Configuration by Language ============
+
+interface CountryWithCities {
+  country: string;
+  countryLabel: string;
+  cities: { value: string; label: string }[];
+}
+
+const locationsByLanguage: Record<string, CountryWithCities[]> = {
+  sr: [
+    {
+      country: 'RS',
+      countryLabel: 'Srbija',
+      cities: [
+        { value: 'Beograd', label: 'Beograd' },
+        { value: 'Novi Sad', label: 'Novi Sad' },
+        { value: 'Niš', label: 'Niš' },
+        { value: 'Kragujevac', label: 'Kragujevac' },
+        { value: 'Subotica', label: 'Subotica' },
+        { value: 'Zrenjanin', label: 'Zrenjanin' },
+        { value: 'Pančevo', label: 'Pančevo' },
+        { value: 'Čačak', label: 'Čačak' },
+        { value: 'Leskovac', label: 'Leskovac' },
+        { value: 'Valjevo', label: 'Valjevo' },
+        { value: 'Kruševac', label: 'Kruševac' },
+        { value: 'Vranje', label: 'Vranje' },
+        { value: 'Šabac', label: 'Šabac' },
+        { value: 'Užice', label: 'Užice' },
+        { value: 'Sombor', label: 'Sombor' },
+        { value: 'Smederevo', label: 'Smederevo' },
+        { value: 'Novi Pazar', label: 'Novi Pazar' },
+        { value: 'Kraljevo', label: 'Kraljevo' },
+        { value: 'Jagodina', label: 'Jagodina' },
+        { value: 'Pirot', label: 'Pirot' },
+        { value: 'Zaječar', label: 'Zaječar' },
+        { value: 'Kikinda', label: 'Kikinda' },
+        { value: 'Sremska Mitrovica', label: 'Sremska Mitrovica' },
+        { value: 'Požarevac', label: 'Požarevac' },
+        { value: 'Bor', label: 'Bor' },
+        { value: 'Prokuplje', label: 'Prokuplje' },
+        { value: 'Loznica', label: 'Loznica' },
+        { value: 'Vršac', label: 'Vršac' },
+        { value: 'Bačka Palanka', label: 'Bačka Palanka' },
+        { value: 'Inđija', label: 'Inđija' },
+        { value: 'Stara Pazova', label: 'Stara Pazova' },
+        { value: 'Ruma', label: 'Ruma' },
+        { value: 'Aranđelovac', label: 'Aranđelovac' },
+        { value: 'Paraćin', label: 'Paraćin' },
+        { value: 'Bečej', label: 'Bečej' },
+        { value: 'Aleksinac', label: 'Aleksinac' },
+        { value: 'Lazarevac', label: 'Lazarevac' },
+        { value: 'Trstenik', label: 'Trstenik' },
+        { value: 'Obrenovac', label: 'Obrenovac' },
+        { value: 'Negotin', label: 'Negotin' },
+        { value: 'Ćuprija', label: 'Ćuprija' },
+        { value: 'Temerin', label: 'Temerin' },
+        { value: 'Priboj', label: 'Priboj' },
+        { value: 'Senta', label: 'Senta' },
+        { value: 'Apatin', label: 'Apatin' },
+        { value: 'Gornji Milanovac', label: 'Gornji Milanovac' },
+        { value: 'Ivanjica', label: 'Ivanjica' },
+        { value: 'Knjaževac', label: 'Knjaževac' },
+        { value: 'Petrovac na Mlavi', label: 'Petrovac na Mlavi' },
+        { value: 'Kuršumlija', label: 'Kuršumlija' },
+      ],
+    },
+  ],
+  en: [
+    {
+      country: 'RS',
+      countryLabel: 'Serbia',
+      cities: [
+        { value: 'Belgrade', label: 'Belgrade' },
+        { value: 'Novi Sad', label: 'Novi Sad' },
+        { value: 'Niš', label: 'Niš' },
+        { value: 'Kragujevac', label: 'Kragujevac' },
+        { value: 'Subotica', label: 'Subotica' },
+        { value: 'Zrenjanin', label: 'Zrenjanin' },
+        { value: 'Pančevo', label: 'Pančevo' },
+        { value: 'Čačak', label: 'Čačak' },
+        { value: 'Leskovac', label: 'Leskovac' },
+        { value: 'Valjevo', label: 'Valjevo' },
+        { value: 'Kruševac', label: 'Kruševac' },
+        { value: 'Vranje', label: 'Vranje' },
+        { value: 'Šabac', label: 'Šabac' },
+        { value: 'Užice', label: 'Užice' },
+        { value: 'Sombor', label: 'Sombor' },
+        { value: 'Smederevo', label: 'Smederevo' },
+        { value: 'Novi Pazar', label: 'Novi Pazar' },
+        { value: 'Kraljevo', label: 'Kraljevo' },
+        { value: 'Jagodina', label: 'Jagodina' },
+        { value: 'Pirot', label: 'Pirot' },
+        { value: 'Zaječar', label: 'Zaječar' },
+        { value: 'Kikinda', label: 'Kikinda' },
+        { value: 'Sremska Mitrovica', label: 'Sremska Mitrovica' },
+        { value: 'Požarevac', label: 'Požarevac' },
+        { value: 'Bor', label: 'Bor' },
+      ],
+    },
+    {
+      country: 'DE',
+      countryLabel: 'Germany',
+      cities: [
+        { value: 'Berlin', label: 'Berlin' },
+        { value: 'Munich', label: 'Munich' },
+        { value: 'Frankfurt', label: 'Frankfurt' },
+        { value: 'Hamburg', label: 'Hamburg' },
+        { value: 'Cologne', label: 'Cologne' },
+        { value: 'Düsseldorf', label: 'Düsseldorf' },
+        { value: 'Stuttgart', label: 'Stuttgart' },
+        { value: 'Dortmund', label: 'Dortmund' },
+        { value: 'Essen', label: 'Essen' },
+        { value: 'Leipzig', label: 'Leipzig' },
+        { value: 'Bremen', label: 'Bremen' },
+        { value: 'Dresden', label: 'Dresden' },
+        { value: 'Hanover', label: 'Hanover' },
+        { value: 'Nuremberg', label: 'Nuremberg' },
+        { value: 'Duisburg', label: 'Duisburg' },
+        { value: 'Bochum', label: 'Bochum' },
+        { value: 'Wuppertal', label: 'Wuppertal' },
+        { value: 'Bielefeld', label: 'Bielefeld' },
+        { value: 'Bonn', label: 'Bonn' },
+        { value: 'Mannheim', label: 'Mannheim' },
+      ],
+    },
+    {
+      country: 'AT',
+      countryLabel: 'Austria',
+      cities: [
+        { value: 'Vienna', label: 'Vienna' },
+        { value: 'Graz', label: 'Graz' },
+        { value: 'Linz', label: 'Linz' },
+        { value: 'Salzburg', label: 'Salzburg' },
+        { value: 'Innsbruck', label: 'Innsbruck' },
+        { value: 'Klagenfurt', label: 'Klagenfurt' },
+        { value: 'Villach', label: 'Villach' },
+        { value: 'Wels', label: 'Wels' },
+        { value: 'Sankt Pölten', label: 'Sankt Pölten' },
+        { value: 'Dornbirn', label: 'Dornbirn' },
+      ],
+    },
+    {
+      country: 'CH',
+      countryLabel: 'Switzerland',
+      cities: [
+        { value: 'Zurich', label: 'Zurich' },
+        { value: 'Geneva', label: 'Geneva' },
+        { value: 'Basel', label: 'Basel' },
+        { value: 'Bern', label: 'Bern' },
+        { value: 'Lausanne', label: 'Lausanne' },
+        { value: 'Winterthur', label: 'Winterthur' },
+        { value: 'Lucerne', label: 'Lucerne' },
+        { value: 'St. Gallen', label: 'St. Gallen' },
+        { value: 'Lugano', label: 'Lugano' },
+        { value: 'Biel', label: 'Biel' },
+      ],
+    },
+    {
+      country: 'FR',
+      countryLabel: 'France',
+      cities: [
+        { value: 'Paris', label: 'Paris' },
+        { value: 'Marseille', label: 'Marseille' },
+        { value: 'Lyon', label: 'Lyon' },
+        { value: 'Toulouse', label: 'Toulouse' },
+        { value: 'Nice', label: 'Nice' },
+        { value: 'Nantes', label: 'Nantes' },
+        { value: 'Strasbourg', label: 'Strasbourg' },
+        { value: 'Montpellier', label: 'Montpellier' },
+        { value: 'Bordeaux', label: 'Bordeaux' },
+        { value: 'Lille', label: 'Lille' },
+        { value: 'Rennes', label: 'Rennes' },
+        { value: 'Reims', label: 'Reims' },
+        { value: 'Le Havre', label: 'Le Havre' },
+        { value: 'Saint-Étienne', label: 'Saint-Étienne' },
+        { value: 'Toulon', label: 'Toulon' },
+        { value: 'Grenoble', label: 'Grenoble' },
+        { value: 'Dijon', label: 'Dijon' },
+        { value: 'Angers', label: 'Angers' },
+        { value: 'Nîmes', label: 'Nîmes' },
+        { value: 'Aix-en-Provence', label: 'Aix-en-Provence' },
+      ],
+    },
+    {
+      country: 'IT',
+      countryLabel: 'Italy',
+      cities: [
+        { value: 'Rome', label: 'Rome' },
+        { value: 'Milan', label: 'Milan' },
+        { value: 'Naples', label: 'Naples' },
+        { value: 'Turin', label: 'Turin' },
+        { value: 'Palermo', label: 'Palermo' },
+        { value: 'Genoa', label: 'Genoa' },
+        { value: 'Bologna', label: 'Bologna' },
+        { value: 'Florence', label: 'Florence' },
+        { value: 'Bari', label: 'Bari' },
+        { value: 'Catania', label: 'Catania' },
+        { value: 'Venice', label: 'Venice' },
+        { value: 'Verona', label: 'Verona' },
+        { value: 'Messina', label: 'Messina' },
+        { value: 'Padua', label: 'Padua' },
+        { value: 'Trieste', label: 'Trieste' },
+        { value: 'Brescia', label: 'Brescia' },
+        { value: 'Parma', label: 'Parma' },
+        { value: 'Taranto', label: 'Taranto' },
+        { value: 'Modena', label: 'Modena' },
+        { value: 'Reggio Calabria', label: 'Reggio Calabria' },
+      ],
+    },
+    {
+      country: 'RO',
+      countryLabel: 'Romania',
+      cities: [
+        { value: 'Bucharest', label: 'Bucharest' },
+        { value: 'Cluj-Napoca', label: 'Cluj-Napoca' },
+        { value: 'Timișoara', label: 'Timișoara' },
+        { value: 'Iași', label: 'Iași' },
+        { value: 'Constanța', label: 'Constanța' },
+        { value: 'Craiova', label: 'Craiova' },
+        { value: 'Brașov', label: 'Brașov' },
+        { value: 'Galați', label: 'Galați' },
+        { value: 'Ploiești', label: 'Ploiești' },
+        { value: 'Oradea', label: 'Oradea' },
+        { value: 'Brăila', label: 'Brăila' },
+        { value: 'Arad', label: 'Arad' },
+        { value: 'Pitești', label: 'Pitești' },
+        { value: 'Sibiu', label: 'Sibiu' },
+        { value: 'Bacău', label: 'Bacău' },
+        { value: 'Târgu Mureș', label: 'Târgu Mureș' },
+        { value: 'Baia Mare', label: 'Baia Mare' },
+        { value: 'Buzău', label: 'Buzău' },
+        { value: 'Botoșani', label: 'Botoșani' },
+        { value: 'Satu Mare', label: 'Satu Mare' },
+      ],
+    },
+  ],
+  ro: [
+    {
+      country: 'RO',
+      countryLabel: 'România',
+      cities: [
+        { value: 'București', label: 'București' },
+        { value: 'Cluj-Napoca', label: 'Cluj-Napoca' },
+        { value: 'Timișoara', label: 'Timișoara' },
+        { value: 'Iași', label: 'Iași' },
+        { value: 'Constanța', label: 'Constanța' },
+        { value: 'Craiova', label: 'Craiova' },
+        { value: 'Brașov', label: 'Brașov' },
+        { value: 'Galați', label: 'Galați' },
+        { value: 'Ploiești', label: 'Ploiești' },
+        { value: 'Oradea', label: 'Oradea' },
+        { value: 'Brăila', label: 'Brăila' },
+        { value: 'Arad', label: 'Arad' },
+        { value: 'Pitești', label: 'Pitești' },
+        { value: 'Sibiu', label: 'Sibiu' },
+        { value: 'Bacău', label: 'Bacău' },
+        { value: 'Târgu Mureș', label: 'Târgu Mureș' },
+        { value: 'Baia Mare', label: 'Baia Mare' },
+        { value: 'Buzău', label: 'Buzău' },
+        { value: 'Botoșani', label: 'Botoșani' },
+        { value: 'Satu Mare', label: 'Satu Mare' },
+        { value: 'Râmnicu Vâlcea', label: 'Râmnicu Vâlcea' },
+        { value: 'Drobeta-Turnu Severin', label: 'Drobeta-Turnu Severin' },
+        { value: 'Suceava', label: 'Suceava' },
+        { value: 'Piatra Neamț', label: 'Piatra Neamț' },
+        { value: 'Târgu Jiu', label: 'Târgu Jiu' },
+        { value: 'Târgoviște', label: 'Târgoviște' },
+        { value: 'Focșani', label: 'Focșani' },
+        { value: 'Bistrița', label: 'Bistrița' },
+        { value: 'Reșița', label: 'Reșița' },
+        { value: 'Tulcea', label: 'Tulcea' },
+      ],
+    },
+  ],
+  de: [
+    {
+      country: 'DE',
+      countryLabel: 'Deutschland',
+      cities: [
+        { value: 'Berlin', label: 'Berlin' },
+        { value: 'München', label: 'München' },
+        { value: 'Frankfurt', label: 'Frankfurt' },
+        { value: 'Hamburg', label: 'Hamburg' },
+        { value: 'Köln', label: 'Köln' },
+        { value: 'Düsseldorf', label: 'Düsseldorf' },
+        { value: 'Stuttgart', label: 'Stuttgart' },
+        { value: 'Dortmund', label: 'Dortmund' },
+        { value: 'Essen', label: 'Essen' },
+        { value: 'Leipzig', label: 'Leipzig' },
+        { value: 'Bremen', label: 'Bremen' },
+        { value: 'Dresden', label: 'Dresden' },
+        { value: 'Hannover', label: 'Hannover' },
+        { value: 'Nürnberg', label: 'Nürnberg' },
+        { value: 'Duisburg', label: 'Duisburg' },
+        { value: 'Bochum', label: 'Bochum' },
+        { value: 'Wuppertal', label: 'Wuppertal' },
+        { value: 'Bielefeld', label: 'Bielefeld' },
+        { value: 'Bonn', label: 'Bonn' },
+        { value: 'Mannheim', label: 'Mannheim' },
+        { value: 'Karlsruhe', label: 'Karlsruhe' },
+        { value: 'Augsburg', label: 'Augsburg' },
+        { value: 'Wiesbaden', label: 'Wiesbaden' },
+        { value: 'Münster', label: 'Münster' },
+        { value: 'Gelsenkirchen', label: 'Gelsenkirchen' },
+        { value: 'Aachen', label: 'Aachen' },
+        { value: 'Mönchengladbach', label: 'Mönchengladbach' },
+        { value: 'Braunschweig', label: 'Braunschweig' },
+        { value: 'Kiel', label: 'Kiel' },
+        { value: 'Chemnitz', label: 'Chemnitz' },
+      ],
+    },
+    {
+      country: 'AT',
+      countryLabel: 'Österreich',
+      cities: [
+        { value: 'Wien', label: 'Wien' },
+        { value: 'Graz', label: 'Graz' },
+        { value: 'Linz', label: 'Linz' },
+        { value: 'Salzburg', label: 'Salzburg' },
+        { value: 'Innsbruck', label: 'Innsbruck' },
+        { value: 'Klagenfurt', label: 'Klagenfurt' },
+        { value: 'Villach', label: 'Villach' },
+        { value: 'Wels', label: 'Wels' },
+        { value: 'Sankt Pölten', label: 'Sankt Pölten' },
+        { value: 'Dornbirn', label: 'Dornbirn' },
+        { value: 'Wiener Neustadt', label: 'Wiener Neustadt' },
+        { value: 'Steyr', label: 'Steyr' },
+        { value: 'Feldkirch', label: 'Feldkirch' },
+        { value: 'Bregenz', label: 'Bregenz' },
+        { value: 'Leonding', label: 'Leonding' },
+      ],
+    },
+    {
+      country: 'CH',
+      countryLabel: 'Schweiz',
+      cities: [
+        { value: 'Zürich', label: 'Zürich' },
+        { value: 'Genf', label: 'Genf' },
+        { value: 'Basel', label: 'Basel' },
+        { value: 'Bern', label: 'Bern' },
+        { value: 'Lausanne', label: 'Lausanne' },
+        { value: 'Winterthur', label: 'Winterthur' },
+        { value: 'Luzern', label: 'Luzern' },
+        { value: 'St. Gallen', label: 'St. Gallen' },
+        { value: 'Lugano', label: 'Lugano' },
+        { value: 'Biel', label: 'Biel' },
+      ],
+    },
+  ],
+  fr: [
+    {
+      country: 'FR',
+      countryLabel: 'France',
+      cities: [
+        { value: 'Paris', label: 'Paris' },
+        { value: 'Marseille', label: 'Marseille' },
+        { value: 'Lyon', label: 'Lyon' },
+        { value: 'Toulouse', label: 'Toulouse' },
+        { value: 'Nice', label: 'Nice' },
+        { value: 'Nantes', label: 'Nantes' },
+        { value: 'Strasbourg', label: 'Strasbourg' },
+        { value: 'Montpellier', label: 'Montpellier' },
+        { value: 'Bordeaux', label: 'Bordeaux' },
+        { value: 'Lille', label: 'Lille' },
+        { value: 'Rennes', label: 'Rennes' },
+        { value: 'Reims', label: 'Reims' },
+        { value: 'Le Havre', label: 'Le Havre' },
+        { value: 'Saint-Étienne', label: 'Saint-Étienne' },
+        { value: 'Toulon', label: 'Toulon' },
+        { value: 'Grenoble', label: 'Grenoble' },
+        { value: 'Dijon', label: 'Dijon' },
+        { value: 'Angers', label: 'Angers' },
+        { value: 'Nîmes', label: 'Nîmes' },
+        { value: 'Aix-en-Provence', label: 'Aix-en-Provence' },
+        { value: 'Brest', label: 'Brest' },
+        { value: 'Le Mans', label: 'Le Mans' },
+        { value: 'Amiens', label: 'Amiens' },
+        { value: 'Tours', label: 'Tours' },
+        { value: 'Limoges', label: 'Limoges' },
+        { value: 'Clermont-Ferrand', label: 'Clermont-Ferrand' },
+        { value: 'Villeurbanne', label: 'Villeurbanne' },
+        { value: 'Besançon', label: 'Besançon' },
+        { value: 'Orléans', label: 'Orléans' },
+        { value: 'Metz', label: 'Metz' },
+      ],
+    },
+    {
+      country: 'CH',
+      countryLabel: 'Suisse',
+      cities: [
+        { value: 'Genève', label: 'Genève' },
+        { value: 'Lausanne', label: 'Lausanne' },
+        { value: 'Neuchâtel', label: 'Neuchâtel' },
+        { value: 'Fribourg', label: 'Fribourg' },
+        { value: 'Sion', label: 'Sion' },
+        { value: 'Montreux', label: 'Montreux' },
+        { value: 'La Chaux-de-Fonds', label: 'La Chaux-de-Fonds' },
+        { value: 'Vevey', label: 'Vevey' },
+        { value: 'Yverdon-les-Bains', label: 'Yverdon-les-Bains' },
+        { value: 'Bienne', label: 'Bienne' },
+      ],
+    },
+    {
+      country: 'BE',
+      countryLabel: 'Belgique',
+      cities: [
+        { value: 'Bruxelles', label: 'Bruxelles' },
+        { value: 'Liège', label: 'Liège' },
+        { value: 'Charleroi', label: 'Charleroi' },
+        { value: 'Namur', label: 'Namur' },
+        { value: 'Mons', label: 'Mons' },
+        { value: 'Tournai', label: 'Tournai' },
+        { value: 'Arlon', label: 'Arlon' },
+        { value: 'La Louvière', label: 'La Louvière' },
+      ],
+    },
+  ],
+  it: [
+    {
+      country: 'IT',
+      countryLabel: 'Italia',
+      cities: [
+        { value: 'Roma', label: 'Roma' },
+        { value: 'Milano', label: 'Milano' },
+        { value: 'Napoli', label: 'Napoli' },
+        { value: 'Torino', label: 'Torino' },
+        { value: 'Palermo', label: 'Palermo' },
+        { value: 'Genova', label: 'Genova' },
+        { value: 'Bologna', label: 'Bologna' },
+        { value: 'Firenze', label: 'Firenze' },
+        { value: 'Bari', label: 'Bari' },
+        { value: 'Catania', label: 'Catania' },
+        { value: 'Venezia', label: 'Venezia' },
+        { value: 'Verona', label: 'Verona' },
+        { value: 'Messina', label: 'Messina' },
+        { value: 'Padova', label: 'Padova' },
+        { value: 'Trieste', label: 'Trieste' },
+        { value: 'Brescia', label: 'Brescia' },
+        { value: 'Parma', label: 'Parma' },
+        { value: 'Taranto', label: 'Taranto' },
+        { value: 'Modena', label: 'Modena' },
+        { value: 'Reggio Calabria', label: 'Reggio Calabria' },
+        { value: 'Reggio Emilia', label: 'Reggio Emilia' },
+        { value: 'Perugia', label: 'Perugia' },
+        { value: 'Livorno', label: 'Livorno' },
+        { value: 'Ravenna', label: 'Ravenna' },
+        { value: 'Cagliari', label: 'Cagliari' },
+        { value: 'Foggia', label: 'Foggia' },
+        { value: 'Rimini', label: 'Rimini' },
+        { value: 'Salerno', label: 'Salerno' },
+        { value: 'Ferrara', label: 'Ferrara' },
+        { value: 'Sassari', label: 'Sassari' },
+      ],
+    },
+    {
+      country: 'CH',
+      countryLabel: 'Svizzera',
+      cities: [
+        { value: 'Lugano', label: 'Lugano' },
+        { value: 'Bellinzona', label: 'Bellinzona' },
+        { value: 'Locarno', label: 'Locarno' },
+        { value: 'Mendrisio', label: 'Mendrisio' },
+        { value: 'Chiasso', label: 'Chiasso' },
+        { value: 'Ascona', label: 'Ascona' },
+      ],
+    },
+  ],
+};
+
+// ============ Types ============
 
 interface SearchFilters {
   q: string;
@@ -133,7 +619,6 @@ interface SearchFilters {
   minPrice: string;
   maxPrice: string;
   sort: string;
-  status: string;
 }
 
 function FiltersContent({ 
@@ -142,25 +627,76 @@ function FiltersContent({
   onSearch, 
   onReset, 
   onSaveSearch,
+  onLoadSearch,
   categories,
   isLoadingCategories,
-  t 
+  t,
+  language,
+  selectedCountry,
+  onCountryChange,
+  savedSearchesVersion
 }: FiltersContentProps) {
-  const cityOptions = [
-    { value: '', label: t.search.allCities },
-    { value: 'Beograd', label: 'Beograd' },
-    { value: 'Novi Sad', label: 'Novi Sad' },
-    { value: 'Ni�', label: 'Ni�' },
-    { value: 'Kragujevac', label: 'Kragujevac' },
-    { value: 'Subotica', label: 'Subotica' },
-  ];
+  const [showSavedSearches, setShowSavedSearches] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
-  const statusOptions = [
-    { value: '', label: 'Svi statusi' },
-    { value: 'available', label: 'Dostupno' },
-    { value: 'rented', label: 'Iznajmljeno' },
-    { value: 'maintenance', label: 'Na odr�avanju' },
+  // Load saved searches from localStorage - refresh when panel opens or version changes
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    setSavedSearches(saved);
+  }, [showSavedSearches, savedSearchesVersion]);
+
+  const handleDeleteSearch = (id: number) => {
+    const updated = savedSearches.filter(s => s.id !== id);
+    localStorage.setItem('savedSearches', JSON.stringify(updated));
+    setSavedSearches(updated);
+  };
+
+  const handleLoadSearch = (search: SavedSearch) => {
+    onLoadSearch(search.filters);
+    setShowSavedSearches(false);
+  };
+
+  // Get locations for current language
+  const locations = locationsByLanguage[language] || locationsByLanguage['en'];
+  const hasMultipleCountries = locations.length > 1;
+  
+  // Build country options
+  const countryOptions = [
+    { value: '', label: t.search.allCountries || 'Sve države' },
+    ...locations.map(loc => ({ value: loc.country, label: loc.countryLabel }))
   ];
+  
+  // Build city options based on selected country
+  const cityOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
+      { value: '', label: t.search.allCities }
+    ];
+    
+    if (selectedCountry) {
+      // Show only cities from selected country
+      const countryData = locations.find(loc => loc.country === selectedCountry);
+      if (countryData) {
+        options.push(...countryData.cities);
+      }
+    } else {
+      // Show all cities grouped (or flat for single country)
+      if (hasMultipleCountries) {
+        // For multiple countries, show country as group header
+        locations.forEach(loc => {
+          loc.cities.forEach(city => {
+            options.push({ value: city.value, label: `${city.label} (${loc.countryLabel})` });
+          });
+        });
+      } else {
+        // Single country - just show cities
+        locations.forEach(loc => {
+          options.push(...loc.cities);
+        });
+      }
+    }
+    
+    return options;
+  }, [locations, selectedCountry, hasMultipleCountries, t.search.allCities]);
 
   const categoryOptions = [
     { value: '', label: t.search.allCategories || 'Sve kategorije' },
@@ -189,30 +725,43 @@ function FiltersContent({
 
       {/* Category Filter */}
       <div>
-        <Select
+        <CustomSelect
           label={t.common.category}
           options={categoryOptions}
           value={filters.category}
-          onChange={(e) => onFilterChange('category', e.target.value)}
+          onChange={(value) => onFilterChange('category', value)}
+          placeholder={t.search.allCategories || 'Sve kategorije'}
+          searchable
         />
       </div>
 
-      {/* Status Filter */}
+      {/* Country Filter - only show if multiple countries */}
+      {hasMultipleCountries && (
+        <div>
+          <CustomSelect
+            label={t.search.country || 'Država'}
+            options={countryOptions}
+            value={selectedCountry}
+            onChange={(value) => {
+              onCountryChange(value);
+              // Clear city when country changes
+              onFilterChange('city', '');
+            }}
+            placeholder={t.search.allCountries || 'Sve države'}
+          />
+        </div>
+      )}
+
+      {/* City Filter */}
       <div>
-        <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">{t.search.status}</h3>
-        {statusOptions.map(option => (
-          <label key={option.value} className="flex items-center mb-2 cursor-pointer">
-            <input 
-              type="radio" 
-              name="status" 
-              value={option.value}
-              checked={filters.status === option.value}
-              onChange={(e) => onFilterChange('status', e.target.value)}
-              className="mr-3 accent-[#e85d45]" 
-            />
-            <span className="text-sm text-gray-600 dark:text-gray-400">{option.label}</span>
-          </label>
-        ))}
+        <CustomSelect
+          label={t.search.location}
+          options={cityOptions}
+          value={filters.city}
+          onChange={(value) => onFilterChange('city', value)}
+          placeholder={t.search.allCities}
+          searchable
+        />
       </div>
 
       {/* Price Range */}
@@ -220,31 +769,21 @@ function FiltersContent({
         <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">{t.search.price}</h3>
         <div className="flex items-center gap-2">
           <Input 
-            placeholder="�0" 
+            placeholder="€0" 
             value={filters.minPrice}
             onChange={(e) => onFilterChange('minPrice', e.target.value)}
             className="!py-2 text-sm" 
             type="number"
           />
-          <span className="text-gray-400">�</span>
+          <span className="text-gray-400">–</span>
           <Input 
-            placeholder="�1000" 
+            placeholder="€1000" 
             value={filters.maxPrice}
             onChange={(e) => onFilterChange('maxPrice', e.target.value)}
             className="!py-2 text-sm" 
             type="number"
           />
         </div>
-      </div>
-
-      {/* City Filter */}
-      <div>
-        <Select
-          label={t.search.location}
-          options={cityOptions}
-          value={filters.city}
-          onChange={(e) => onFilterChange('city', e.target.value)}
-        />
       </div>
 
       {/* Action Buttons */}
@@ -255,17 +794,81 @@ function FiltersContent({
         </Button>
       </div>
 
-      {/* Save Search */}
-      <div className="flex justify-center pt-2">
-        <button 
-          onClick={onSaveSearch}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#e85d45] dark:hover:text-[#e85d45] transition-colors flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-          {t.search.saveSearch}
-        </button>
+      {/* Save & Load Searches */}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-2">
+          {/* Save Search Button */}
+          <button 
+            onClick={onSaveSearch}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#e85d45] dark:hover:text-[#e85d45] transition-colors flex items-center gap-1.5"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            {t.search.saveSearch}
+          </button>
+
+          {/* Toggle Saved Searches */}
+          <button 
+            onClick={() => setShowSavedSearches(!showSavedSearches)}
+            className={`text-sm transition-colors flex items-center gap-1.5 ${
+              showSavedSearches 
+                ? 'text-[#e85d45]' 
+                : 'text-gray-500 dark:text-gray-400 hover:text-[#e85d45] dark:hover:text-[#e85d45]'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Sačuvane ({savedSearches.length})
+          </button>
+        </div>
+
+        {/* Saved Searches List */}
+        {showSavedSearches && (
+          <div className="mt-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+            {savedSearches.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-2">
+                Nemate sačuvanih pretraga
+              </p>
+            ) : (
+              savedSearches.map((search) => (
+                <div 
+                  key={search.id}
+                  className="flex items-center justify-between gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 group hover:border-[#e85d45] transition-colors"
+                >
+                  <button
+                    onClick={() => handleLoadSearch(search)}
+                    className="flex-1 text-left"
+                  >
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate group-hover:text-[#e85d45] transition-colors">
+                      {search.name}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {new Date(search.date).toLocaleDateString('sr-Latn-RS', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSearch(search.id);
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                    title="Obriši"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -274,25 +877,82 @@ function FiltersContent({
 // ============ Main SearchPage Component ============
 
 export default function SearchPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { success } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { categorySlug } = useParams<{ categorySlug?: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we're on /category/:slug route
+  const isCategoryRoute = location.pathname.startsWith('/category/');
   
   // Mobile drawer state
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   
-  // Initialize filters from URL
+  // Saved searches version - increment to trigger refresh
+  const [savedSearchesVersion, setSavedSearchesVersion] = useState(0);
+  
+  // Initialize filters from URL - use categorySlug from path if on category route
   const [filters, setFilters] = useState<SearchFilters>(() => ({
     q: searchParams.get('q') || '',
-    category: searchParams.get('category') || '',
+    category: isCategoryRoute && categorySlug ? categorySlug : (searchParams.get('category') || ''),
     city: searchParams.get('city') || '',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
     sort: searchParams.get('sort') || 'default',
-    status: searchParams.get('status') || '',
   }));
+  
+  // Country selection state (for languages with multiple countries)
+  const [selectedCountry, setSelectedCountry] = useState('');
   
   const [currentPage, setCurrentPage] = useState(() => {
     return parseInt(searchParams.get('page') || '1', 10);
+  });
+  
+  // Track if change came from URL (browser back/forward) to prevent circular updates
+  const isUrlSync = useRef(false);
+  
+  // Sync page from URL when browser back/forward is used
+  useEffect(() => {
+    const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+    if (pageFromUrl !== currentPage) {
+      isUrlSync.current = true;
+      setCurrentPage(pageFromUrl);
+    }
+  }, [location.search]);
+  
+  // Sync filters from URL when browser back/forward is used
+  useEffect(() => {
+    const newFilters = {
+      q: searchParams.get('q') || '',
+      category: isCategoryRoute && categorySlug ? categorySlug : (searchParams.get('category') || ''),
+      city: searchParams.get('city') || '',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      sort: searchParams.get('sort') || 'default',
+    };
+    
+    // Check if filters actually changed
+    const filtersChanged = Object.keys(newFilters).some(
+      key => newFilters[key as keyof SearchFilters] !== filters[key as keyof SearchFilters]
+    );
+    
+    if (filtersChanged) {
+      isUrlSync.current = true;
+      setFilters(newFilters);
+    }
+  }, [location.search, categorySlug, isCategoryRoute]);
+  
+  // Grid layout and items per page
+  const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(() => {
+    const saved = localStorage.getItem('searchGridColumns');
+    return (saved ? parseInt(saved, 10) : 3) as 2 | 3 | 4;
+  });
+  
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+    const saved = localStorage.getItem('searchItemsPerPage');
+    return saved ? parseInt(saved, 10) : 12;
   });
 
   // Debounce search query (400ms)
@@ -306,7 +966,7 @@ export default function SearchPage() {
   const apiParams = useMemo(() => {
     const params: any = {
       page: currentPage,
-      limit: 12,
+      limit: itemsPerPage,
     };
     
     if (debouncedQuery) params.q = debouncedQuery;
@@ -315,13 +975,15 @@ export default function SearchPage() {
     if (filters.minPrice) params.minPrice = filters.minPrice;
     if (filters.maxPrice) params.maxPrice = filters.maxPrice;
     if (filters.sort && filters.sort !== 'default') params.sort = filters.sort;
-    if (filters.status) params.status = filters.status;
     
     return params;
-  }, [currentPage, debouncedQuery, filters.category, filters.city, filters.minPrice, filters.maxPrice, filters.sort, filters.status]);
+  }, [currentPage, itemsPerPage, debouncedQuery, filters.category, filters.city, filters.minPrice, filters.maxPrice, filters.sort]);
 
   // Fetch resources with TanStack Query
-  const { data: resourcesData, isLoading, isError, error } = useResources(apiParams);
+  const { data: resourcesData, isLoading: isLoadingResources, isError, error } = useResources(apiParams);
+  
+  // Apply minimum 300ms loading time for smooth UX (reduced from 800ms for faster response)
+  const isLoading = useMinimumLoading(isLoadingResources, 300);
 
   // Transform resources data
   const resources = useMemo(() => {
@@ -339,8 +1001,44 @@ export default function SearchPage() {
     }));
   }, [resourcesData, t.common.category]);
 
-  const totalResults = (resourcesData as any)?.total || 0;
-  const totalPages = Math.ceil(totalResults / 12) || 1;
+  // Get total results from various possible response formats
+  const totalResults = useMemo(() => {
+    if (!resourcesData) return 0;
+    // Try different response formats - backend uses 'meta' object
+    if (resourcesData.meta?.total) return resourcesData.meta.total;
+    if (typeof resourcesData.total === 'number') return resourcesData.total;
+    if (resourcesData.pagination?.total) return resourcesData.pagination.total;
+    // Check if it's directly an array (some APIs return array directly)
+    if (Array.isArray(resourcesData)) return resourcesData.length;
+    // Fallback to data length (but this means we can't paginate properly)
+    if (resourcesData.data?.length) return resourcesData.data.length;
+    return 0;
+  }, [resourcesData]);
+  
+  // Get total pages - prefer from API if available
+  const totalPages = useMemo(() => {
+    if (!resourcesData) return 1;
+    // Try to get from API response - backend uses 'meta' object
+    if (resourcesData.meta?.totalPages) return resourcesData.meta.totalPages;
+    if (typeof resourcesData.totalPages === 'number') return resourcesData.totalPages;
+    if (resourcesData.pagination?.totalPages) return resourcesData.pagination.totalPages;
+    // Calculate from total
+    if (totalResults > 0) return Math.ceil(totalResults / itemsPerPage);
+    return 1;
+  }, [resourcesData, totalResults, itemsPerPage]);
+
+  // Handle grid columns change
+  const handleGridColumnsChange = useCallback((cols: 2 | 3 | 4) => {
+    setGridColumns(cols);
+    localStorage.setItem('searchGridColumns', String(cols));
+  }, []);
+
+  // Handle items per page change - keep current page
+  const handleItemsPerPageChange = useCallback((count: number) => {
+    setItemsPerPage(count);
+    localStorage.setItem('searchItemsPerPage', String(count));
+    // Don't reset page - user wants to stay on current page
+  }, []);
 
   // Get category name for display
   const categoryName = useMemo(() => {
@@ -349,21 +1047,43 @@ export default function SearchPage() {
     return cat?.name || '';
   }, [filters.category, categories]);
 
-  // Sync filters to URL
+  // Sync filters to URL - use navigate for proper browser history
   useEffect(() => {
+    // Skip URL update if change came from browser back/forward
+    if (isUrlSync.current) {
+      isUrlSync.current = false;
+      return;
+    }
+    
     const params = new URLSearchParams();
     
     if (filters.q) params.set('q', filters.q);
-    if (filters.category) params.set('category', filters.category);
+    // Only add category to query params if NOT on category route
+    if (filters.category && !isCategoryRoute) params.set('category', filters.category);
     if (filters.city) params.set('city', filters.city);
     if (filters.minPrice) params.set('minPrice', filters.minPrice);
     if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
     if (filters.sort && filters.sort !== 'default') params.set('sort', filters.sort);
-    if (filters.status) params.set('status', filters.status);
     if (currentPage > 1) params.set('page', String(currentPage));
     
-    setSearchParams(params, { replace: true });
-  }, [filters, currentPage, setSearchParams]);
+    // Build the URL based on whether we're on category route or not
+    const queryString = params.toString();
+    const newSearch = queryString ? `?${queryString}` : '';
+    
+    // Skip if URL already matches (prevents duplicate history entries)
+    if (location.search === newSearch) {
+      return;
+    }
+    
+    if (isCategoryRoute && categorySlug) {
+      // On /category/:slug route, update only query params
+      const newPath = `/category/${categorySlug}${newSearch}`;
+      navigate(newPath, { replace: false });
+    } else {
+      // On /search route, use setSearchParams
+      setSearchParams(params, { replace: false });
+    }
+  }, [filters, currentPage, setSearchParams, isCategoryRoute, categorySlug, navigate]);
 
   // Filter change handler
   const handleFilterChange = useCallback((key: string, value: string) => {
@@ -371,11 +1091,26 @@ export default function SearchPage() {
     setCurrentPage(1); // Reset to first page on filter change
   }, []);
 
-  // Search handler
+  // Search handler - navigate to /search and clear category if on category route
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
     setIsFilterDrawerOpen(false);
-  }, []);
+    
+    // If on category route, navigate to clean /search
+    if (isCategoryRoute) {
+      // Clear all filters and navigate to /search
+      setFilters({
+        q: '',
+        category: '',
+        city: '',
+        minPrice: '',
+        maxPrice: '',
+        sort: 'default',
+      });
+      setSelectedCountry('');
+      navigate('/search');
+    }
+  }, [isCategoryRoute, navigate]);
 
   // Reset filters
   const handleReset = useCallback(() => {
@@ -386,8 +1121,8 @@ export default function SearchPage() {
       minPrice: '',
       maxPrice: '',
       sort: 'default',
-      status: '',
     });
+    setSelectedCountry('');
     setCurrentPage(1);
   }, []);
 
@@ -397,13 +1132,22 @@ export default function SearchPage() {
     const searchToSave = {
       id: Date.now(),
       filters,
-      name: filters.q || categoryName || 'Sacuvana pretraga',
+      name: filters.q || categoryName || 'Sačuvana pretraga',
       date: new Date().toISOString(),
     };
     savedSearches.push(searchToSave);
     localStorage.setItem('savedSearches', JSON.stringify(savedSearches.slice(-10))); // Keep last 10
-    alert('Pretraga je sacuvana!');
-  }, [filters, categoryName]);
+    setSavedSearchesVersion(v => v + 1); // Trigger refresh in FiltersContent
+    success('Pretraga sačuvana', 'Možete je pronaći u "Sačuvane pretrage"');
+  }, [filters, categoryName, success]);
+
+  // Load saved search
+  const handleLoadSearch = useCallback((savedFilters: SearchFilters) => {
+    setFilters(savedFilters);
+    setCurrentPage(1);
+    setIsFilterDrawerOpen(false);
+    success('Pretraga učitana', 'Kliknite "Pretraži" za prikaz rezultata');
+  }, [success]);
 
   const sortOptions = [
     { value: 'default', label: 'Podrazumevano' },
@@ -423,7 +1167,17 @@ export default function SearchPage() {
             {categoryName || t.search.title}
           </h1>
           <p className="text-gray-400 mb-8">{t.home.heroSubtitle}</p>
-          <SearchBar className="max-w-3xl mx-auto" />
+          <SearchBar 
+            variant="hero" 
+            showQuickLinks={false} 
+            enableSuggestions={false}
+            className="max-w-3xl mx-auto"
+            initialQuery={filters.q}
+            onQueryChange={(query) => {
+              setFilters(prev => ({ ...prev, q: query }));
+              setCurrentPage(1);
+            }}
+          />
         </div>
       </section>
 
@@ -434,7 +1188,21 @@ export default function SearchPage() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{categoryName || t.search.title}</h2>
             <p className="text-gray-500 dark:text-gray-400">
-              {filters.category ? `${t.nav.home} / ${t.nav.categories} / ${categoryName}` : t.search.breadcrumb}
+              {filters.category ? (
+                <span className="flex items-center gap-1 flex-wrap">
+                  <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+                  <span>/</span>
+                  <Link to="/categories" className="hover:text-[#e85d45] transition-colors">{t.nav.categories}</Link>
+                  <span>/</span>
+                  <span className="text-gray-700 dark:text-gray-300">{categoryName}</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <Link to="/" className="hover:text-[#e85d45] transition-colors">{t.nav.home}</Link>
+                  <span>/</span>
+                  <span className="text-gray-700 dark:text-gray-300">{t.search.title}</span>
+                </span>
+              )}
             </p>
           </div>
           
@@ -465,9 +1233,14 @@ export default function SearchPage() {
                 onSearch={handleSearch}
                 onReset={handleReset}
                 onSaveSearch={handleSaveSearch}
+                onLoadSearch={handleLoadSearch}
                 categories={categories}
                 isLoadingCategories={isLoadingCategories}
                 t={t}
+                language={language}
+                selectedCountry={selectedCountry}
+                onCountryChange={setSelectedCountry}
+                savedSearchesVersion={savedSearchesVersion}
               />
             </div>
           </aside>
@@ -483,31 +1256,103 @@ export default function SearchPage() {
               onSearch={handleSearch}
               onReset={handleReset}
               onSaveSearch={handleSaveSearch}
+              onLoadSearch={handleLoadSearch}
               categories={categories}
               isLoadingCategories={isLoadingCategories}
               t={t}
+              language={language}
+              selectedCountry={selectedCountry}
+              onCountryChange={setSelectedCountry}
+              savedSearchesVersion={savedSearchesVersion}
             />
           </FilterDrawer>
 
           {/* Results Grid */}
           <div className="flex-1">
             {/* Results Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <p className="text-gray-500 dark:text-gray-400">
-                {isLoading 
-                  ? t.common.loading 
-                  : `${t.search.showing} ${Math.min(1, totalResults)}-${Math.min(currentPage * 12, totalResults)} ${t.search.of} ${totalResults} ${t.search.results}`
-                }
-              </p>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">{t.search.sortBy}:</span>
-                <Select 
-                  options={sortOptions} 
-                  value={filters.sort}
-                  onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  fullWidth={false} 
-                  className="w-40" 
-                />
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 mb-6 shadow-sm border border-gray-100 dark:border-gray-800">
+              {/* Top row - Results count and Sort */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {isLoading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-[#e85d45] border-t-transparent rounded-full animate-spin"></span>
+                        Učitavanje...
+                      </span>
+                    ) : totalResults > 0 ? (
+                      <>
+                        {totalResults} {totalResults === 1 ? 'oglas' : totalResults < 5 ? 'oglasa' : 'oglasa'}
+                      </>
+                    ) : (
+                      'Nema rezultata'
+                    )}
+                  </span>
+                  {!isLoading && totalResults > 0 && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      (stranica {currentPage} od {totalPages})
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{t.search.sortBy}:</span>
+                  <Select 
+                    options={sortOptions} 
+                    value={filters.sort}
+                    onChange={(e) => handleFilterChange('sort', e.target.value)}
+                    fullWidth={false} 
+                    className="w-40" 
+                  />
+                </div>
+              </div>
+              
+              {/* Bottom row - Grid layout and Items per page */}
+              <div className="flex flex-wrap justify-between items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Grid Layout Toggle */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Prikaz:</span>
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1">
+                    {[2, 3, 4].map((cols) => (
+                      <button
+                        key={cols}
+                        onClick={() => handleGridColumnsChange(cols as 2 | 3 | 4)}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                          gridColumns === cols
+                            ? 'bg-white dark:bg-gray-700 text-[#e85d45] shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                        title={`${cols} kolone`}
+                        aria-label={`Prikaži ${cols} kolone`}
+                      >
+                        <div className="flex gap-0.5">
+                          {[...Array(cols)].map((_, i) => (
+                            <div key={i} className="w-2 h-4 bg-current rounded-sm" />
+                          ))}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Items Per Page */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Po stranici:</span>
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1">
+                    {[10, 20, 30, 50].map((count) => (
+                      <button
+                        key={count}
+                        onClick={() => handleItemsPerPageChange(count)}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all min-w-[40px] ${
+                          itemsPerPage === count
+                            ? 'bg-white dark:bg-gray-700 text-[#e85d45] shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                      >
+                        {count}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -517,15 +1362,19 @@ export default function SearchPage() {
                 <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Gre�ka pri ucitavanju</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Poku�ajte ponovo.'}</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mb-2">Greška pri učitavanju</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{(error as Error)?.message || 'Pokušajte ponovo.'}</p>
               </div>
             )}
 
             {/* Loading State - Skeleton */}
             {isLoading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
+              <div className={`grid grid-cols-1 gap-6 ${
+                gridColumns === 2 ? 'md:grid-cols-2' :
+                gridColumns === 3 ? 'md:grid-cols-2 xl:grid-cols-3' :
+                'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              }`}>
+                {[...Array(itemsPerPage > 12 ? 12 : itemsPerPage)].map((_, i) => (
                   <ResourceCardSkeleton key={i} />
                 ))}
               </div>
@@ -538,7 +1387,7 @@ export default function SearchPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.common.noResults}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Poku�ajte sa drugim filterima ili pretragom.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Pokušajte sa drugim filterima ili pretragom.</p>
                 <Button variant="outline" onClick={handleReset}>
                   Resetuj filtere
                 </Button>
@@ -547,20 +1396,25 @@ export default function SearchPage() {
 
             {/* Results Grid */}
             {!isLoading && !isError && resources.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className={`grid grid-cols-1 gap-6 ${
+                gridColumns === 2 ? 'md:grid-cols-2' :
+                gridColumns === 3 ? 'md:grid-cols-2 xl:grid-cols-3' :
+                'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              }`}>
                 {resources.map((resource: Resource) => (
                   <ResourceCard key={resource.id} resource={resource} />
                 ))}
               </div>
             )}
 
-            {/* Pagination */}
-            {!isLoading && !isError && totalResults > 12 && (
+            {/* Pagination - Always show when there are results */}
+            {!isLoading && !isError && resources.length > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 totalResults={totalResults}
+                resultsPerPage={itemsPerPage}
               />
             )}
           </div>

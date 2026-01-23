@@ -189,7 +189,7 @@ export const createResource = async (req: Request, res: Response, next: NextFunc
     const resourceData = {
       ...req.body,
       ownerId: req.user._id,
-      status: "pending", // New resources start as pending
+      status: req.body.status || "active", // Use provided status or default to active
     };
 
     const resource = new Resource(resourceData);

@@ -40,7 +40,6 @@ const resourceSchema = new mongoose.Schema<IResourceDB>(
     },
     slug: { 
       type: String, 
-      required: true, 
       unique: true,
       lowercase: true,
       trim: true 
@@ -53,8 +52,9 @@ const resourceSchema = new mongoose.Schema<IResourceDB>(
     },
     pricePerDay: { 
       type: Number, 
-      required: true, 
+      required: false, 
       min: 0,
+      default: 0,
       index: true
     },
     currency: { 
@@ -68,7 +68,7 @@ const resourceSchema = new mongoose.Schema<IResourceDB>(
     },
     status: { 
       type: String, 
-      enum: ["active", "inactive", "pending", "rented"], 
+      enum: ["active", "inactive", "pending", "rented", "menjam", "poklanjam"], 
       default: "pending" 
     },
     options: [{ 
@@ -115,7 +115,8 @@ resourceSchema.index({ slug: 1 });
 
 // Pre-save middleware to generate slug from title
 resourceSchema.pre("save", async function (next) {
-  if (this.isModified("title")) {
+  // Generate slug if title is modified OR if slug doesn't exist
+  if (this.isModified("title") || !this.slug) {
     let baseSlug = this.title
       .toLowerCase()
       .replace(/[čć]/g, "c")

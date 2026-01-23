@@ -179,12 +179,12 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </Link>
-              <button
-                onClick={() => {/* TODO: Partner functionality */}}
+              <Link
+                to="/partner"
                 className="bg-[#1a1a1a] dark:bg-[#e85d45] text-white px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-[#d14d35]"
               >
                 {t.home.becomePartner}
-              </button>
+              </Link>
             </div>
           </div>
         </div>

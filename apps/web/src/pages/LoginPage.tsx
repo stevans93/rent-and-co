@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage, useAuth } from '../context';
+import { useLanguage, useAuth, useToast } from '../context';
 import { Input, Button } from '../components';
 import { SEO, SEOConfigs } from '../components/SEO';
 
 export default function LoginPage() {
   const { t } = useLanguage();
   const { login } = useAuth();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -35,9 +36,11 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (result.success) {
+      success('Uspešna prijava!', 'Dobrodošli nazad na Rent&Co');
       navigate(from, { replace: true });
     } else {
       setError(result.message || 'Greška pri prijavi');
+      showError('Greška pri prijavi', result.message || 'Proverite vaše podatke i pokušajte ponovo');
     }
     
     setIsLoading(false);

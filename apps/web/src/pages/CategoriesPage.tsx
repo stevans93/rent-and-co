@@ -27,7 +27,6 @@ export default function CategoriesPage() {
   const { t } = useLanguage();
   const { isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Helper to get translated category name
   const getCategoryName = (slug: string, fallbackName: string) => {
@@ -43,8 +42,6 @@ export default function CategoriesPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
-        // Direct fetch without cache to ensure fresh data
         const response = await fetch('http://localhost:5000/api/categories');
         const result = await response.json();
         
@@ -62,21 +59,11 @@ export default function CategoriesPage() {
       } catch (err) {
         console.error('Error fetching categories:', err);
         setCategories(fallbackCategories);
-      } finally {
-        setLoading(false);
       }
     };
     
     fetchCategories();
   }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -101,7 +88,7 @@ export default function CategoriesPage() {
           {categories.map(category => (
             <a
               key={category.id}
-              href={`/search?category=${category.slug}`}
+              href={`/category/${category.slug}`}
               className="relative rounded-xl overflow-hidden h-64 group shadow-sm hover:shadow-lg transition-shadow"
             >
               <img

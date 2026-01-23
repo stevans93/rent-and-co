@@ -9,7 +9,7 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { toggleTheme, isDark } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -165,21 +165,23 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Favorites Icon */}
-            <Link
-              to="/favorites"
-              className="p-2 text-gray-300 hover:text-[#e85d45] transition-colors relative"
-              aria-label={t.nav.favorites}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </Link>
+            {/* Favorites Icon - only show when logged in */}
+            {isAuthenticated && (
+              <Link
+                to="/favorites"
+                className="p-2 text-gray-300 hover:text-[#e85d45] transition-colors relative"
+                aria-label={t.nav.favorites}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+              </Link>
+            )}
 
             {/* User Menu */}
             <div className="relative">
@@ -381,21 +383,23 @@ export default function Navbar() {
 
               <hr className="border-gray-700" />
 
-              <Link
-                to="/favorites"
-                className="text-sm text-gray-300 hover:text-white flex items-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {t.nav.favorites}
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/favorites"
+                  className="text-sm text-gray-300 hover:text-white flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  {t.nav.favorites}
+                </Link>
+              )}
 
               {user ? (
                 <>

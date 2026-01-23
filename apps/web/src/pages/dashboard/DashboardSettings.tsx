@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useAuth, useLanguage } from '../../context';
+import { useAuth, useLanguage, useToast } from '../../context';
 
 export default function DashboardSettings() {
   const { user, updateUser, token } = useAuth();
   const { t } = useLanguage();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -45,11 +46,14 @@ export default function DashboardSettings() {
       if (result.success) {
         updateUser(result.data);
         setSuccess(t.dashboard.profileUpdated);
+        toast.success('Profil ažuriran', 'Vaši podaci su uspešno sačuvani');
       } else {
         setError(result.message || t.dashboard.errorUpdating);
+        toast.error('Greška', result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
       setError(t.dashboard.errorUpdating);
+      toast.error('Greška', t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +64,7 @@ export default function DashboardSettings() {
     
     if (passwords.newPassword !== passwords.confirmPassword) {
       setError(t.dashboard.passwordsNoMatch);
+      toast.warning('Pažnja', t.dashboard.passwordsNoMatch);
       return;
     }
 
@@ -84,12 +89,15 @@ export default function DashboardSettings() {
 
       if (result.success) {
         setSuccess(t.dashboard.passwordChanged);
+        toast.success('Lozinka promenjena', 'Vaša lozinka je uspešno ažurirana');
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
         setError(result.message || t.dashboard.errorUpdating);
+        toast.error('Greška', result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
       setError(t.dashboard.errorUpdating);
+      toast.error('Greška', t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }

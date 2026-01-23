@@ -1,9 +1,12 @@
-import { useLanguage, useTheme } from '../context';
+import { useState } from 'react';
+import { useLanguage, useTheme, useToast } from '../context';
 import { SEO, SEOConfigs } from '../components/SEO';
 
 export default function ContactPage() {
   const { t } = useLanguage();
   const { isDark } = useTheme();
+  const { success, error } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const contactCards = [
     {
@@ -79,7 +82,16 @@ export default function ContactPage() {
             {/* Form */}
             <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-8 shadow-sm">
               <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{t.home.whatIsLoremIpsum}</h2>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                // Simulate form submission
+                setTimeout(() => {
+                  setIsSubmitting(false);
+                  success('Poruka poslata!', 'Odgovorićemo vam u najkraćem mogućem roku.');
+                  (e.target as HTMLFormElement).reset();
+                }, 1000);
+              }}>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t.auth.firstName}</label>
                   <input
@@ -112,21 +124,27 @@ export default function ContactPage() {
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-[#252538] text-gray-900 dark:text-white placeholder-gray-400 resize-none"
                   ></textarea>
                 </div>
-                <button className="w-full bg-[#e85d45] text-white py-3 rounded-lg flex items-center justify-center hover:bg-[#d14d35]">
-                  {t.contactPage.submit}
-                  <svg
-                    className="w-4 h-4 ml-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full bg-[#e85d45] text-white py-3 rounded-lg flex items-center justify-center hover:bg-[#d14d35] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Slanje...' : t.contactPage.submit}
+                  {!isSubmitting && (
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  )}
                 </button>
               </form>
             </div>

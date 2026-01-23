@@ -1,6 +1,7 @@
 export { useApi } from './useApi';
 export { usePreloadPage } from './usePreloadPage';
 export { useLanguage } from '../context';
+export { useMinimumLoading } from './useMinimumLoading';
 
 // TanStack Query hooks
 export {

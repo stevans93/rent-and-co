@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLanguage, useAuth } from '../context';
+import { useLanguage, useAuth, useToast } from '../context';
 import { Input, Button } from '../components';
 import { SEO, SEOConfigs } from '../components/SEO';
 
 export default function RegisterPage() {
   const { t } = useLanguage();
   const { register } = useAuth();
+  const { success, error: showError, warning } = useToast();
   const navigate = useNavigate();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +32,7 @@ export default function RegisterPage() {
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Lozinke se ne poklapaju');
+      warning('Pažnja', 'Lozinke se ne poklapaju');
       setIsLoading(false);
       return;
     }
@@ -38,9 +40,11 @@ export default function RegisterPage() {
     const result = await register(formData);
     
     if (result.success) {
+      success('Uspešna registracija!', 'Vaš nalog je kreiran. Dobrodošli na Rent&Co!');
       navigate('/dashboard', { replace: true });
     } else {
       setError(result.message || 'Greška pri registraciji');
+      showError('Greška pri registraciji', result.message || 'Pokušajte ponovo');
     }
     
     setIsLoading(false);

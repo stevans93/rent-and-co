@@ -16,6 +16,12 @@ export function validateBody<T>(schema: ZodSchema<T>) {
           message: err.message,
         }));
         
+        // Debug logging - remove after fixing
+        console.log('=== VALIDATION ERROR ===');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        console.log('Validation errors:', JSON.stringify(errors, null, 2));
+        console.log('========================');
+        
         res.status(400).json({
           success: false,
           message: "Validacija nije uspela",

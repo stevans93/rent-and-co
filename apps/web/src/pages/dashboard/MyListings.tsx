@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useLanguage } from '../../context';
+import { createPortal } from 'react-dom';
+import { useAuth, useLanguage, useToast } from '../../context';
 
 interface Listing {
   _id: string;
   title: string;
   slug: string;
-  status: 'active' | 'pending' | 'inactive';
+  status: 'active' | 'pending' | 'inactive' | 'rented' | 'menjam' | 'poklanjam';
   pricePerDay: number;
   currency: string;
   views: number;
@@ -27,19 +28,58 @@ interface PaginationData {
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', ''); // Remove /api for static files
+
+// Helper to get full image URL
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
 
 export default function MyListings() {
   const { token } = useAuth();
   const { t } = useLanguage();
+  const { success, error: showError } = useToast();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; listing: Listing | null }>({ open: false, listing: null });
+  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [pagination, setPagination] = useState<PaginationData>({ total: 0, page: 1, limit: 10, pages: 1 });
+
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openMenuId && !buttonRefs.current[openMenuId]?.contains(e.target as Node)) {
+        setOpenMenuId(null);
+        setMenuPosition(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
+
+  const handleMenuToggle = (listingId: string) => {
+    if (openMenuId === listingId) {
+      setOpenMenuId(null);
+      setMenuPosition(null);
+    } else {
+      const button = buttonRefs.current[listingId];
+      if (button) {
+        const rect = button.getBoundingClientRect();
+        setMenuPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.right + window.scrollX - 144, // 144px = menu width (w-36 = 9rem = 144px)
+        });
+        setOpenMenuId(listingId);
+      }
+    }
+  };
 
   useEffect(() => {
     fetchMyListings();
@@ -47,7 +87,6 @@ export default function MyListings() {
 
   const fetchMyListings = async () => {
     if (!token) return;
-    setLoading(true);
     
     try {
       const params = new URLSearchParams();
@@ -59,6 +98,7 @@ export default function MyListings() {
           'Authorization': `Bearer ${token}`,
         },
       });
+      
       const result = await response.json();
       if (result.success) {
         setListings(result.data || []);
@@ -75,8 +115,6 @@ export default function MyListings() {
       }
     } catch (error) {
       console.error('Error fetching listings:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,27 +132,37 @@ export default function MyListings() {
       if (response.ok) {
         setListings(listings.filter(l => l._id !== deleteModal.listing?._id));
         setDeleteModal({ open: false, listing: null });
+        success('Oglas obrisan', 'Vaš oglas je uspešno obrisan');
         fetchMyListings();
+      } else {
+        showError('Greška', 'Nije moguće obrisati oglas');
       }
     } catch (error) {
       console.error('Error deleting listing:', error);
+      showError('Greška', 'Došlo je do greške pri brisanju oglasa');
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const styles = {
+    const styles: Record<string, string> = {
       active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
       pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400',
+      rented: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      menjam: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      poklanjam: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
     };
-    const labels = {
+    const labels: Record<string, string> = {
       active: t.dashboard.active,
       pending: t.dashboard.pending,
       inactive: t.dashboard.inactive,
+      rented: 'Iznajmljeno',
+      menjam: 'Menjam',
+      poklanjam: 'Poklanjam',
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.inactive}`}>
-        {labels[status as keyof typeof labels] || status}
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.inactive}`}>
+        {labels[status] || status}
       </span>
     );
   };
@@ -123,14 +171,6 @@ export default function MyListings() {
     setPerPage(newPerPage);
     setCurrentPage(1);
   };
-
-  if (loading && listings.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e85d45]"></div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -152,7 +192,7 @@ export default function MyListings() {
       </div>
 
       {/* Listings Table */}
-      <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800">
         <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white">{t.dashboard.allListings} ({pagination.total})</h2>
           
@@ -186,7 +226,7 @@ export default function MyListings() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-[#252525]">
                 <tr>
@@ -203,12 +243,30 @@ export default function MyListings() {
                 {listings.map((listing) => (
                   <tr key={listing._id} className="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors">
                     <td className="px-4 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{listing.title}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {listing.location?.city}{listing.location?.address && `, ${listing.location.address}`}
-                        </p>
-                      </div>
+                      <Link to={`/resources/${listing.slug}`} className="flex items-center gap-3 group">
+                        {/* Thumbnail */}
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                          {listing.images && listing.images.length > 0 ? (
+                            <img 
+                              src={getImageUrl(listing.images[0].url)} 
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white group-hover:text-[#e85d45] transition-colors">{listing.title}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {listing.location?.city}{listing.location?.address && `, ${listing.location.address}`}
+                          </p>
+                        </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-4">
                       {getStatusBadge(listing.status)}
@@ -231,9 +289,10 @@ export default function MyListings() {
                     <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
                       {new Date(listing.createdAt).toLocaleDateString('sr-RS')}
                     </td>
-                    <td className="px-4 py-4 text-right relative">
+                    <td className="px-4 py-4 text-right">
                       <button
-                        onClick={() => setOpenMenuId(openMenuId === listing._id ? null : listing._id)}
+                        ref={(el) => { buttonRefs.current[listing._id] = el; }}
+                        onClick={(e) => { e.stopPropagation(); handleMenuToggle(listing._id); }}
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                         aria-label="Opcije"
                       >
@@ -241,51 +300,57 @@ export default function MyListings() {
                           <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                         </svg>
                       </button>
-                      
-                      {/* Dropdown Menu */}
-                      {openMenuId === listing._id && (
-                        <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-[#1e1e1e] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-10">
-                          <Link
-                            to={`/resources/${listing.slug}`}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525]"
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            {t.dashboard.view}
-                          </Link>
-                          <Link
-                            to={`/dashboard/edit-listing/${listing._id}`}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525]"
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            {t.dashboard.edit}
-                          </Link>
-                          <button
-                            onClick={() => {
-                              setDeleteModal({ open: true, listing });
-                              setOpenMenuId(null);
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            {t.dashboard.delete}
-                          </button>
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Dropdown Menu Portal */}
+        {openMenuId && menuPosition && createPortal(
+          <div 
+            className="fixed w-36 bg-white dark:bg-[#1e1e1e] rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-[9999]"
+            style={{ top: menuPosition.top, left: menuPosition.left }}
+          >
+            <Link
+              to={`/resources/${listings.find(l => l._id === openMenuId)?.slug}`}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] rounded-t-lg"
+              onClick={() => { setOpenMenuId(null); setMenuPosition(null); }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {t.dashboard.view}
+            </Link>
+            <Link
+              to={`/dashboard/edit-listing/${openMenuId}`}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525]"
+              onClick={() => { setOpenMenuId(null); setMenuPosition(null); }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              {t.dashboard.edit}
+            </Link>
+            <button
+              onClick={() => {
+                const listing = listings.find(l => l._id === openMenuId);
+                if (listing) setDeleteModal({ open: true, listing });
+                setOpenMenuId(null);
+                setMenuPosition(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full rounded-b-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {t.dashboard.delete}
+            </button>
+          </div>,
+          document.body
         )}
 
         {/* Pagination */}

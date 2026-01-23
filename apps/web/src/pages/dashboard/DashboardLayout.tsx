@@ -96,12 +96,18 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   ),
+  favorites: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  ),
 };
 
 const sidebarLinksConfig = [
   { to: '/dashboard', icon: icons.dashboard, labelKey: 'overview' as const, end: true },
   { to: '/dashboard/my-listings', icon: icons.listings, labelKey: 'myListings' as const },
   { to: '/dashboard/add-listing', icon: icons.add, labelKey: 'addListing' as const },
+  { to: '/dashboard/favorites', icon: icons.favorites, labelKey: 'favorites' as const },
   { to: '/dashboard/analytics', icon: icons.analytics, labelKey: 'analytics' as const },
   { to: '/dashboard/payments', icon: icons.payments, labelKey: 'payments' as const },
   { to: '/dashboard/settings', icon: icons.settings, labelKey: 'settings' as const },
@@ -164,12 +170,9 @@ export default function DashboardLayout() {
     localStorage.setItem('dashboard-sidebar-open', JSON.stringify(newState));
   };
 
+  // Wait for auth to resolve - RouteLoader handles the loading state
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#121212]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e85d45]"></div>
-      </div>
-    );
+    return null;
   }
 
   const handleLogout = () => {

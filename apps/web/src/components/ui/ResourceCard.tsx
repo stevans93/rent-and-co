@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '../../context';
+import { useLanguage, useAuth, useFavorites } from '../../context';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export interface Resource {
   id: number | string;
@@ -28,9 +31,38 @@ export default function ResourceCard({
   showActions = true 
 }: ResourceCardProps) {
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth();
+  const { isFavorite: checkIsFavorite, toggleFavorite } = useFavorites();
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  // Check if this resource is favorited using global context
+  const isFavorite = checkIsFavorite(String(resource.id));
 
   // SEO-friendly alt text
   const imageAlt = `${resource.title} — ${resource.city || resource.address} — iznajmljivanje po danu`;
+
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // If parent provides handler, use it
+    if (onFavoriteToggle) {
+      onFavoriteToggle(resource.id);
+      return;
+    }
+
+    // Otherwise use global favorites context
+    if (!isAuthenticated || isTogglingFavorite) return;
+
+    setIsTogglingFavorite(true);
+    try {
+      await toggleFavorite(String(resource.id));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,22 +141,23 @@ export default function ResourceCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
               </button>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onFavoriteToggle?.(resource.id);
-                }}
-                className={`p-2 rounded-full transition-colors ${
-                  resource.isFavorite 
-                    ? 'text-[#e85d45] bg-[#e85d45]/10' 
-                    : 'hover:text-[#e85d45] hover:bg-[#e85d45]/10'
-                }`}
-                aria-label="Dodaj oglas u omiljene"
-              >
-                <svg className="w-5 h-5" fill={resource.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </button>
+              {/* Favorite button - only show when user is logged in */}
+              {isAuthenticated && (
+                <button 
+                  onClick={handleFavoriteToggle}
+                  disabled={isTogglingFavorite}
+                  className={`p-2 rounded-full transition-colors ${
+                    isFavorite 
+                      ? 'text-[#e85d45] bg-[#e85d45]/10' 
+                      : 'hover:text-[#e85d45] hover:bg-[#e85d45]/10'
+                  } ${isTogglingFavorite ? 'opacity-50' : ''}`}
+                  aria-label={isFavorite ? 'Ukloni iz omiljenih' : 'Dodaj u omiljene'}
+                >
+                  <svg className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              )}
             </div>
           )}
         </div>

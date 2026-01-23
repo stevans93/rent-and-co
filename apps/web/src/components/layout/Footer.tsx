@@ -101,6 +101,11 @@ export default function Footer() {
                   {t.footer.faq}
                 </Link>
               </li>
+              <li>
+                <Link to="/partner" className="text-sm text-gray-400 hover:text-white transition-colors">
+                  {t.footer.partner}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -131,19 +136,8 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+          <div className="flex justify-center items-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} Rent&Co - {t.footer.allRightsReserved}</p>
-            <div className="flex space-x-4 mt-2 md:mt-0">
-              <Link to="/privacy" className="hover:text-white transition-colors">
-                {t.footer.privacy}
-              </Link>
-              <Link to="/terms" className="hover:text-white transition-colors">
-                {t.footer.terms}
-              </Link>
-              <Link to="/sitemap" className="hover:text-white transition-colors">
-                {t.footer.sitemap}
-              </Link>
-            </div>
           </div>
         </div>
       </div>

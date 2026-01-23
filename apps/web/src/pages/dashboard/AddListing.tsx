@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth, useLanguage } from '../../context';
+import { useAuth, useLanguage, useToast } from '../../context';
+import { countries, getCitiesForCountry, getMunicipalitiesForCity } from '../../data/locations';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -13,9 +14,9 @@ const addListingSchema = z.object({
   description: z.string().min(20, 'Opis mora imati najmanje 20 karaktera').max(5000),
   categoryId: z.string().min(1, 'Kategorija je obavezna'),
   rentalType: z.string().optional(),
-  pricePerDay: z.coerce.number().positive('Cena mora biti pozitivan broj'),
+  pricePerDay: z.coerce.number().min(0, 'Cena ne može biti negativna').optional(),
   currency: z.enum(['EUR', 'RSD', 'USD']),
-  status: z.enum(['active', 'inactive', 'pending']),
+  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam']),
   location: z.object({
     country: z.string().default('Srbija'),
     city: z.string().min(2, 'Grad je obavezan'),
@@ -35,6 +36,7 @@ interface Category {
 export default function AddListing() {
   const { token } = useAuth();
   const { t } = useLanguage();
+  const { success, error: showError, warning } = useToast();
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
@@ -44,6 +46,10 @@ export default function AddListing() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Location state
+  const [selectedCountry, setSelectedCountry] = useState('Srbija');
+  const [selectedCity, setSelectedCity] = useState('');
 
   // Helper to get translated category name
   const getCategoryName = (slug: string, fallbackName: string) => {
@@ -56,14 +62,26 @@ export default function AddListing() {
     handleSubmit,
     formState: { errors },
     trigger,
+    watch,
+    setValue,
   } = useForm<AddListingFormData>({
     resolver: zodResolver(addListingSchema) as any,
     defaultValues: {
       currency: 'EUR',
       status: 'active',
-      location: { country: 'Srbija' },
+      pricePerDay: 0,
+      location: { 
+        country: 'Srbija',
+        city: '',
+        municipality: '',
+        address: '',
+      },
     },
   });
+
+  // Watch status to conditionally show/hide price section
+  const currentStatus = watch('status');
+  const isPriceRequired = currentStatus !== 'menjam' && currentStatus !== 'poklanjam';
 
   // Fetch categories
   useEffect(() => {
@@ -81,30 +99,126 @@ export default function AddListing() {
     fetchCategories();
   }, []);
 
-  // Handle image upload
-  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress image to target size (max 80KB) while maintaining quality
+  const compressImage = useCallback((file: File, maxSizeKB: number = 80): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          // Scale down if needed
+          if (width > MAX_WIDTH) {
+            height = (height * MAX_WIDTH) / width;
+            width = MAX_WIDTH;
+          }
+          if (height > MAX_HEIGHT) {
+            width = (width * MAX_HEIGHT) / height;
+            height = MAX_HEIGHT;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Start with high quality and reduce until under target size
+          let quality = 0.8;
+          let blob: Blob | null = null;
+          
+          const tryCompress = () => {
+            canvas.toBlob(
+              (result) => {
+                if (!result) {
+                  reject(new Error('Failed to compress image'));
+                  return;
+                }
+                
+                const sizeKB = result.size / 1024;
+                
+                if (sizeKB <= maxSizeKB || quality <= 0.1) {
+                  // Convert blob to file
+                  const compressedFile = new File([result], file.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now(),
+                  });
+                  console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(1)}KB -> ${(compressedFile.size / 1024).toFixed(1)}KB`);
+                  resolve(compressedFile);
+                } else {
+                  // Reduce quality and try again
+                  quality -= 0.1;
+                  tryCompress();
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+          
+          tryCompress();
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+    });
+  }, []);
+
+  // Handle image upload with compression
+  const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 10) {
-      alert('Maksimalno 10 fotografija');
+      warning('Previše slika', 'Maksimalno 10 fotografija po oglasu');
       return;
     }
 
     const validFiles = files.filter(file => {
       const isValid = file.type.startsWith('image/');
-      const isSmallEnough = file.size <= 5 * 1024 * 1024; // 5MB
+      const isSmallEnough = file.size <= 10 * 1024 * 1024; // 10MB original limit
       return isValid && isSmallEnough;
     });
 
-    setImages(prev => [...prev, ...validFiles]);
+    // Compress each file
+    const compressedFiles: File[] = [];
+    for (const file of validFiles) {
+      try {
+        const compressed = await compressImage(file, 80); // Max 80KB
+        compressedFiles.push(compressed);
+        
+        // Generate preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(compressed);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        // Use original if compression fails
+        compressedFiles.push(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
     
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
-  }, [images.length]);
+    setImages(prev => [...prev, ...compressedFiles]);
+  }, [images.length, compressImage, warning]);
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
@@ -142,6 +256,20 @@ export default function AddListing() {
     setSubmitError(null);
 
     try {
+      // Prepare data - ensure pricePerDay is 0 for menjam/poklanjam
+      const submitData = {
+        ...data,
+        pricePerDay: (data.status === 'menjam' || data.status === 'poklanjam') 
+          ? 0 
+          : (data.pricePerDay || 0),
+      };
+
+      // Debug logging - remove after fixing
+      console.log('=== SUBMIT DATA ===');
+      console.log('Form data:', data);
+      console.log('Submit data:', submitData);
+      console.log('===================');
+
       // First create the resource
       const response = await fetch(`${API_URL}/resources`, {
         method: 'POST',
@@ -149,10 +277,22 @@ export default function AddListing() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(submitData),
       });
 
       const result = await response.json();
+
+      // Debug logging - remove after fixing
+      console.log('=== API RESPONSE ===');
+      console.log('Status:', response.status);
+      console.log('Result:', JSON.stringify(result, null, 2));
+      if (result.errors) {
+        console.log('Validation errors:');
+        result.errors.forEach((err: { field: string; message: string }) => {
+          console.log(`  - ${err.field}: ${err.message}`);
+        });
+      }
+      console.log('====================');
 
       if (!result.success) {
         throw new Error(result.message || 'Greška pri kreiranju oglasa');
@@ -177,10 +317,13 @@ export default function AddListing() {
       }
 
       // Navigate to my listings
+      success('Oglas uspešno kreiran!', 'Vaš oglas je objavljen i sada je vidljiv svima.');
       navigate('/dashboard/my-listings');
     } catch (error) {
       console.error('Error creating listing:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Greška pri kreiranju oglasa');
+      const errorMessage = error instanceof Error ? error.message : 'Greška pri kreiranju oglasa';
+      setSubmitError(errorMessage);
+      showError('Greška pri kreiranju oglasa', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -198,6 +341,12 @@ export default function AddListing() {
     { value: 'hourly', label: 'Po satu' },
     { value: 'weekly', label: 'Nedeljno' },
     { value: 'monthly', label: 'Mesečno' },
+  ];
+
+  const listingTypes = [
+    { value: 'active', label: 'Izdajem' },
+    { value: 'menjam', label: 'Menjam' },
+    { value: 'poklanjam', label: 'Poklanjam' },
   ];
 
   return (
@@ -274,14 +423,13 @@ export default function AddListing() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.dashboard.status} *
+                    Tip oglasa *
                   </label>
                   <select
-                    {...register('rentalType')}
+                    {...register('status')}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
-                    <option value="">{t.dashboard.selectCategory}</option>
-                    {rentalTypes.map(type => (
+                    {listingTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
@@ -317,6 +465,29 @@ export default function AddListing() {
               {/* Image Upload Area */}
               <div
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.add('border-[#e85d45]', 'bg-[#e85d45]/5');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove('border-[#e85d45]', 'bg-[#e85d45]/5');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove('border-[#e85d45]', 'bg-[#e85d45]/5');
+                  const files = e.dataTransfer.files;
+                  if (files && files.length > 0) {
+                    // Create a fake event to reuse handleImageChange
+                    const fakeEvent = {
+                      target: { files }
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    handleImageChange(fakeEvent);
+                  }
+                }}
                 className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-[#e85d45] transition-colors"
               >
                 <input
@@ -372,28 +543,66 @@ export default function AddListing() {
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.enterPropertyAddress}</p>
 
+              {/* Country Select */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Država *
+                </label>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    setSelectedCountry(e.target.value);
+                    setSelectedCity('');
+                    setValue('location.country', e.target.value);
+                    setValue('location.city', '');
+                    setValue('location.municipality', '');
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                >
+                  {countries.map(country => (
+                    <option key={country.code} value={country.name}>{country.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* City Select */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {t.dashboard.city} *
                   </label>
-                  <input
-                    {...register('location.city')}
-                    placeholder="npr. Beograd"
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setValue('location.city', e.target.value);
+                      setValue('location.municipality', '');
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
-                  />
+                  >
+                    <option value="">Izaberite grad</option>
+                    {getCitiesForCountry(selectedCountry).map(city => (
+                      <option key={city.name} value={city.name}>{city.name}</option>
+                    ))}
+                  </select>
                   {errors.location?.city && <p className="text-red-500 text-sm mt-1">{errors.location.city.message}</p>}
                 </div>
 
+                {/* Municipality Select */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {t.dashboard.municipality}
                   </label>
-                  <input
+                  <select
                     {...register('location.municipality')}
-                    placeholder="npr. Vračar"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
-                  />
+                    disabled={!selectedCity || getMunicipalitiesForCity(selectedCountry, selectedCity).length === 0}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Izaberite opštinu</option>
+                    {getMunicipalitiesForCity(selectedCountry, selectedCity).map(m => (
+                      <option key={m.name} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -419,34 +628,56 @@ export default function AddListing() {
                 </svg>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.price}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.setPriceForRenting}</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.dashboard.priceEur} *
-                  </label>
-                  <input
-                    {...register('pricePerDay')}
-                    type="number"
-                    placeholder="100"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
-                  />
-                  {errors.pricePerDay && <p className="text-red-500 text-sm mt-1">{errors.pricePerDay.message}</p>}
+              
+              {/* Show message for menjam/poklanjam */}
+              {!isPriceRequired ? (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+                  <svg className="w-12 h-12 mx-auto text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-2">
+                    {currentStatus === 'poklanjam' ? 'Poklanjate ovaj artikal' : 'Menjate ovaj artikal'}
+                  </h3>
+                  <p className="text-green-600 dark:text-green-400">
+                    {currentStatus === 'poklanjam' 
+                      ? 'Za poklone ne treba unositi cenu. Možete direktno objaviti oglas.'
+                      : 'Za zamenu ne treba unositi cenu. U opisu navedite šta želite u zamenu.'}
+                  </p>
                 </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.setPriceForRenting}</p>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.dashboard.perPeriod} *
-                  </label>
-                  <select
-                    {...register('currency')}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
-                  >
-                    <option value="EUR">{t.dashboard.perDay}</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.dashboard.priceEur} *
+                      </label>
+                      <input
+                        {...register('pricePerDay')}
+                        type="number"
+                        placeholder="100"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                      />
+                      {errors.pricePerDay && <p className="text-red-500 text-sm mt-1">{errors.pricePerDay.message}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.dashboard.perPeriod} *
+                      </label>
+                      <select
+                        {...register('rentalType')}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                      >
+                        {rentalTypes.map(type => (
+                          <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Error message */}
               {submitError && (

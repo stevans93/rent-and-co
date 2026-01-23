@@ -7,3 +7,7 @@ export { default as ContactPage } from './ContactPage';
 export { default as LoginPage } from './LoginPage';
 export { default as RegisterPage } from './RegisterPage';
 export { default as FavoritesPage } from './FavoritesPage';
+export { default as PricingPage } from './PricingPage';
+export { default as TermsPage } from './TermsPage';
+export { default as PrivacyPage } from './PrivacyPage';
+export { default as FAQPage } from './FAQPage';

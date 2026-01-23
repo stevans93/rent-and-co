@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context';
 import { resourcesApi, SearchSuggestion } from '../services/api';
 
 interface SearchBarProps {
   onSearch?: (query: string, type: 'resources' | 'services') => void;
+  onQueryChange?: (query: string) => void; // Live search callback
+  initialQuery?: string; // Initial query value from parent
   className?: string;
   showTabs?: boolean;
   variant?: 'default' | 'hero';
+  showQuickLinks?: boolean;
+  enableSuggestions?: boolean; // Whether to enable dropdown suggestions (default: true)
 }
 
 // Debounce hook
@@ -27,11 +31,11 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-export default function SearchBar({ onSearch, className = '', showTabs = true, variant = 'default' }: SearchBarProps) {
+export default function SearchBar({ onSearch, onQueryChange, initialQuery = '', className = '', showTabs = true, variant = 'default', showQuickLinks = true, enableSuggestions = true }: SearchBarProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'resources' | 'services'>('resources');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,12 +43,26 @@ export default function SearchBar({ onSearch, className = '', showTabs = true, v
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sync with initialQuery from parent
+  useEffect(() => {
+    if (initialQuery !== query && initialQuery !== undefined) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
+
   // Brži debounce - 150ms umesto 300ms
   const debouncedQuery = useDebounce(query, 150);
 
-  // Fetch suggestions - od prvog karaktera
+  // Call onQueryChange when debounced query changes (for live search)
+  useEffect(() => {
+    if (onQueryChange) {
+      onQueryChange(debouncedQuery);
+    }
+  }, [debouncedQuery, onQueryChange]);
+
+  // Fetch suggestions - od prvog karaktera (only if enabled)
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < 1) {
+    if (!enableSuggestions || searchQuery.length < 1) {
       setSuggestions([]);
       return;
     }
@@ -59,12 +77,14 @@ export default function SearchBar({ onSearch, className = '', showTabs = true, v
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [enableSuggestions]);
 
-  // Effect for debounced search
+  // Effect for debounced search (only fetch if suggestions enabled)
   useEffect(() => {
-    fetchSuggestions(debouncedQuery);
-  }, [debouncedQuery, fetchSuggestions]);
+    if (enableSuggestions) {
+      fetchSuggestions(debouncedQuery);
+    }
+  }, [debouncedQuery, fetchSuggestions, enableSuggestions]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -127,6 +147,9 @@ export default function SearchBar({ onSearch, className = '', showTabs = true, v
 
   // Suggestion dropdown component - kompaktan, max 4 rezultata
   const SuggestionsDropdown = () => {
+    // Don't show anything if suggestions are disabled
+    if (!enableSuggestions) return null;
+
     if (!showSuggestions || (suggestions.length === 0 && !isLoading && query.length >= 1)) {
       if (query.length >= 1 && !isLoading) {
         return (
@@ -278,24 +301,26 @@ export default function SearchBar({ onSearch, className = '', showTabs = true, v
             <SuggestionsDropdown />
           </div>
           
-          {/* Quick Links below search - orange/coral color */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 px-4">
-            <a href="/categories/turizam-i-odmor" className="text-[#e85d45] text-sm font-medium underline underline-offset-2">
-              {t.categories?.['turizam-i-odmor'] || 'Turizam i Odmor'}
-            </a>
-            <a href="/categories/ugostiteljstvo" className="text-[#e85d45] text-sm font-medium underline underline-offset-2">
-              {t.categories?.['ugostiteljstvo'] || 'Ugostiteljstvo'}
-            </a>
-            <a href="/categories/vozila-masine-i-alati" className="text-[#e85d45] text-sm font-medium underline underline-offset-2">
-              {t.categories?.['vozila-masine-i-alati'] || 'Vozila'}
-            </a>
-            <a href="/categories/usluge" className="text-[#e85d45] text-sm font-medium underline underline-offset-2">
-              {t.categories?.['usluge'] || 'Usluge'}
-            </a>
-            <a href="/categories/razno" className="text-[#e85d45] text-sm font-medium underline underline-offset-2">
-              {t.categories?.['razno'] || 'Razno'}
-            </a>
-          </div>
+          {/* Quick Links below search - only show if showQuickLinks is true */}
+          {showQuickLinks && (
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 px-4">
+              <Link to="/category/turizam-i-odmor" className="text-[#e85d45] text-sm font-medium underline underline-offset-2 hover:text-[#d14d35] transition-colors">
+                {t.categories?.['turizam-i-odmor'] || 'Turizam i Odmor'}
+              </Link>
+              <Link to="/category/ugostiteljstvo" className="text-[#e85d45] text-sm font-medium underline underline-offset-2 hover:text-[#d14d35] transition-colors">
+                {t.categories?.['ugostiteljstvo'] || 'Ugostiteljstvo'}
+              </Link>
+              <Link to="/category/vozila-masine-i-alati" className="text-[#e85d45] text-sm font-medium underline underline-offset-2 hover:text-[#d14d35] transition-colors">
+                {t.categories?.['vozila-masine-i-alati'] || 'Vozila'}
+              </Link>
+              <Link to="/category/usluge" className="text-[#e85d45] text-sm font-medium underline underline-offset-2 hover:text-[#d14d35] transition-colors">
+                {t.categories?.['usluge'] || 'Usluge'}
+              </Link>
+              <Link to="/category/razno" className="text-[#e85d45] text-sm font-medium underline underline-offset-2 hover:text-[#d14d35] transition-colors">
+                {t.categories?.['razno'] || 'Razno'}
+              </Link>
+            </div>
+          )}
         </form>
       </div>
     );
