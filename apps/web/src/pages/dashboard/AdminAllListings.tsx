@@ -307,7 +307,7 @@ export default function AdminAllListings() {
                         >
                           {resource.title}
                         </Link>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{resource.categoryId?.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}</p>
                       </div>
                     </div>
                   </td>
@@ -329,20 +329,45 @@ export default function AdminAllListings() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
+                      <Link
+                        to={`/dashboard/edit-listing/${resource._id}`}
+                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        title={t.dashboard.edit}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Link>
                       <button
                         onClick={() => {
                           setSelectedResource(resource);
                           setIsModalOpen(true);
                         }}
-                        className="text-[#e85d45] hover:text-[#d54d35] text-sm"
+                        className="p-1.5 text-[#e85d45] hover:text-[#d54d35] hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                        title={t.dashboard.changeStatus || 'Change status'}
                       >
-                        {t.dashboard.status}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       </button>
+                      <Link
+                        to={`/resources/${resource.slug}`}
+                        target="_blank"
+                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        title={t.dashboard.viewListing || 'View listing'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </Link>
                       <button
                         onClick={() => deleteResource(resource._id)}
-                        className="text-red-500 hover:text-red-700 text-sm"
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title={t.dashboard.delete}
                       >
-                        {t.dashboard.delete}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </td>

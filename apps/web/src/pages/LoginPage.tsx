@@ -36,11 +36,11 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (result.success) {
-      success('Uspešna prijava!', 'Dobrodošli nazad na Rent&Co');
+      success(t.toasts.loginSuccess, t.toasts.loginWelcome);
       navigate(from, { replace: true });
     } else {
-      setError(result.message || 'Greška pri prijavi');
-      showError('Greška pri prijavi', result.message || 'Proverite vaše podatke i pokušajte ponovo');
+      setError(result.message || t.toasts.loginError);
+      showError(t.toasts.loginError, result.message || t.toasts.loginErrorDesc);
     }
     
     setIsLoading(false);

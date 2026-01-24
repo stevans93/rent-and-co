@@ -68,7 +68,7 @@ const resourceSchema = new mongoose.Schema<IResourceDB>(
     },
     status: { 
       type: String, 
-      enum: ["active", "inactive", "pending", "rented", "menjam", "poklanjam"], 
+      enum: ["active", "inactive", "pending", "rented", "menjam", "poklanjam", "draft"], 
       default: "pending" 
     },
     options: [{ 

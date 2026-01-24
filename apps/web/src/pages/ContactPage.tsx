@@ -93,7 +93,7 @@ export default function ContactPage() {
                 // Simulate form submission
                 setTimeout(() => {
                   setIsSubmitting(false);
-                  success('Poruka poslata!', 'Odgovorićemo vam u najkraćem mogućem roku.');
+                  success(t.toasts.messageSent, t.toasts.messageSentDesc);
                   (e.target as HTMLFormElement).reset();
                 }, 1000);
               }}>

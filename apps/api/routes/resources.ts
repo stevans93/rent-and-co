@@ -17,7 +17,7 @@ import {
   reorderResourceImages,
 } from "../controller/resource/images";
 import { auth, validateBody, validateQuery, promiseWrapper, upload, compressImages } from "../middleware";
-import { createResourceSchema, updateResourceSchema, resourceQuerySchema } from "@rent-and-co/shared";
+import { createResourceSchema, updateResourceSchema, resourceQuerySchema, createDraftResourceSchema } from "@rent-and-co/shared";
 
 const router = Router();
 
@@ -32,6 +32,9 @@ router.get("/my", auth, promiseWrapper(getMyResources));
 
 // GET /api/resources/admin - Admin lista svih resursa (auth + admin required)
 router.get("/admin", auth, promiseWrapper(getAdminResources));
+
+// POST /api/resources/draft - Kreiranje drafta (auth required) - MORA BITI PRE /:slug
+router.post("/draft", auth, validateBody(createDraftResourceSchema), promiseWrapper(createResource));
 
 // GET /api/resources/:slug - Detalji po slug-u
 router.get("/:slug", promiseWrapper(getResourceBySlug));

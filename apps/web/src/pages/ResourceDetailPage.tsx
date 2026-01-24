@@ -103,11 +103,11 @@ export default function ResourceDetailPage() {
             }
           }
         } else {
-          setError('Resurs nije pronađen');
+          setError(t.resource.resourceNotFound);
         }
       } catch (err) {
         console.error('Error fetching resource:', err);
-        setError('Greška pri učitavanju resursa');
+        setError(t.resource.loadError);
       }
     };
 
@@ -120,9 +120,9 @@ export default function ResourceDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">{error || 'Resurs nije pronađen'}</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">{error || t.resource.resourceNotFound}</h1>
           <Link to="/search" className="text-[#e85d45] hover:underline">
-            ← Nazad na pretragu
+            ← {t.resource.backToSearch}
           </Link>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function ResourceDetailPage() {
   const breadcrumbItems = [
     { name: t.nav.home, url: '/' },
     { name: t.nav.categories, url: '/categories' },
-    { name: resource.categoryId?.name || '', url: `/category/${resource.categoryId?.slug}` },
+    { name: (t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name || '', url: `/category/${resource.categoryId?.slug}` },
     { name: resource.title, url: `/resources/${resource.slug}` },
   ];
 
@@ -161,7 +161,7 @@ export default function ResourceDetailPage() {
         priceCurrency={resource.currency === '€' ? 'EUR' : 'RSD'}
         availability="InStock"
         url={`/resources/${resource.slug}`}
-        category={resource.categoryId?.name}
+        category={(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}
         seller={{
           name: `${resource.ownerId.firstName} ${resource.ownerId.lastName}`,
         }}
@@ -175,7 +175,7 @@ export default function ResourceDetailPage() {
         <Link to="/categories" className="hover:text-[#e85d45]">{t.nav.categories}</Link>
         {' / '}
         <Link to={`/category/${resource.categoryId?.slug}`} className="hover:text-[#e85d45]">
-          {resource.categoryId?.name}
+          {(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}
         </Link>
         {' / '}
         <span className="text-gray-800">{resource.title}</span>
@@ -191,11 +191,11 @@ export default function ResourceDetailPage() {
               </span>
             )}
             <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-              {resource.categoryId?.icon} {resource.categoryId?.name}
+              {resource.categoryId?.icon} {(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            {resource.title} — iznajmljivanje u {resource.location.city}
+            {resource.title} — {t.resource.rentalIn} {resource.location.city}
           </h1>
           <p className="text-gray-500 dark:text-gray-400">
             {resource.location.address}, {resource.location.city}, {resource.location.country}
@@ -211,8 +211,8 @@ export default function ResourceDetailPage() {
                   ? 'bg-[#e85d45]/10 border-[#e85d45] text-[#e85d45]' 
                   : 'hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300'
               } ${isTogglingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
-              aria-label={isFavorite ? 'Ukloni iz favorita' : 'Sačuvaj u favorite'}
+              title={isFavorite ? t.resource.removeFromFavorites : t.resource.addToFavorites}
+              aria-label={isFavorite ? t.resource.removeFromFavorites : t.resource.addToFavorites}
             >
               <svg className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -221,8 +221,8 @@ export default function ResourceDetailPage() {
           )}
           <button 
             className="p-2 border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300 transition-colors" 
-            title="Podeli"
-            aria-label="Podeli oglas"
+            title={t.resource.share}
+            aria-label={t.resource.share}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -230,8 +230,8 @@ export default function ResourceDetailPage() {
           </button>
           <button 
             className="p-2 border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-light text-gray-600 dark:text-gray-300 transition-colors" 
-            title="Prijavi oglas"
-            aria-label="Prijavi oglas"
+            title={t.resource.report}
+            aria-label={t.resource.report}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -295,14 +295,17 @@ export default function ResourceDetailPage() {
           {/* Options */}
           {resource.options && resource.options.length > 0 && (
             <div className="bg-white dark:bg-dark-card rounded-xl p-6 shadow-sm dark:shadow-none dark:border dark:border-dark-border">
-              <h2 className="text-xl font-bold mb-4 dark:text-white">Karakteristike</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-white">{t.resource.features}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {resource.options.map((option, index) => (
-                  <div key={index} className="flex items-center">
-                    <span className="w-2 h-2 bg-[#e85d45] rounded-full mr-2"></span>
-                    <span className="text-gray-600 dark:text-gray-300">{option}</span>
-                  </div>
-                ))}
+                {resource.options.map((option, index) => {
+                  const translatedOption = (t.featureNames as Record<string, string>)[option.toLowerCase()] || option;
+                  return (
+                    <div key={index} className="flex items-center">
+                      <span className="w-2 h-2 bg-[#e85d45] rounded-full mr-2"></span>
+                      <span className="text-gray-600 dark:text-gray-300">{translatedOption}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -344,12 +347,16 @@ export default function ResourceDetailPage() {
             <div className="bg-white dark:bg-dark-card rounded-xl p-6 shadow-sm dark:shadow-none dark:border dark:border-dark-border">
               <h2 className="text-xl font-bold mb-4 dark:text-white">{t.resource.additionalInfo}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {resource.extraInfo.map((info, index) => (
-                  <div key={index}>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">{info.label}</p>
-                    <p className="font-medium dark:text-white">{info.value}</p>
-                  </div>
-                ))}
+                {resource.extraInfo.map((info, index) => {
+                  const translatedLabel = (t.additionalInfo as Record<string, string>)[info.label.toLowerCase()] || info.label;
+                  const translatedValue = (t.additionalInfo as Record<string, string>)[info.value.toLowerCase()] || info.value;
+                  return (
+                    <div key={index}>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{translatedLabel}</p>
+                      <p className="font-medium dark:text-white">{translatedValue}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -400,7 +407,7 @@ export default function ResourceDetailPage() {
           {/* Stats */}
           <div className="bg-gray-50 dark:bg-dark-light rounded-xl p-4 border border-transparent dark:border-dark-border">
             <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-              <span>👁 {resource.views} pregleda</span>
+              <span>👁 {resource.views} {t.resource.views}</span>
               <span>📅 {new Date(resource.createdAt).toLocaleDateString('sr-RS')}</span>
             </div>
           </div>
@@ -413,7 +420,7 @@ export default function ResourceDetailPage() {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-2xl font-bold dark:text-white">{t.resource.similarResources}</h2>
-              <p className="text-gray-500 dark:text-gray-400">Slični oglasi u kategoriji {resource.categoryId?.name}</p>
+              <p className="text-gray-500 dark:text-gray-400">{t.resource.similarInCategory} {(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

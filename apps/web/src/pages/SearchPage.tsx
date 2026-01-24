@@ -1010,14 +1010,14 @@ export default function SearchPage() {
       id: item._id || item.id,
       title: item.title,
       address: item.location ? `${item.location.address || ''}, ${item.location.city}` : '',
-      category: item.categoryId?.name || t.common.category,
+      category: (t.categories as Record<string, string>)[item.categoryId?.slug || ''] || item.categoryId?.name || t.common.category,
       price: item.pricePerDay,
       currency: item.currency || 'EUR',
       isFeatured: item.isFeatured || false,
       image: item.images?.[0]?.url || '',
       slug: item.slug,
     }));
-  }, [resourcesData, t.common.category]);
+  }, [resourcesData, t.common.category, t.categories]);
 
   // Get total results from various possible response formats
   const totalResults = useMemo(() => {
@@ -1122,8 +1122,8 @@ export default function SearchPage() {
     savedSearches.push(searchToSave);
     localStorage.setItem('savedSearches', JSON.stringify(savedSearches.slice(-10))); // Keep last 10
     setSavedSearchesVersion(v => v + 1); // Trigger refresh in FiltersContent
-    success('Pretraga sačuvana', 'Možete je pronaći u "Sačuvane pretrage"');
-  }, [filters, categoryName, success]);
+    success(t.toasts.searchSaved, t.toasts.searchSavedDesc);
+  }, [filters, categoryName, success, t.toasts]);
 
   // Load saved search
   const handleLoadSearch = useCallback((savedFilters: SearchFilters) => {
@@ -1131,8 +1131,8 @@ export default function SearchPage() {
     setCurrentPageState(1);
     updateUrl(1, savedFilters);
     setIsFilterDrawerOpen(false);
-    success('Pretraga učitana', 'Kliknite "Pretraži" za prikaz rezultata');
-  }, [success, updateUrl]);
+    success(t.toasts.searchLoaded, t.toasts.searchLoadedDesc);
+  }, [success, updateUrl, t.toasts]);
 
   const sortOptions = [
     { value: 'default', label: 'Podrazumevano' },

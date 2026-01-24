@@ -104,12 +104,12 @@ export default function FavoritesPage() {
 
       if (result.success) {
         setFavorites(prev => prev.filter(f => f._id !== resourceId));
-        success('Uklonjeno', 'Oglas je uklonjen iz omiljenih');
+        success(t.toasts.favoriteRemoved, t.toasts.favoriteRemovedDesc);
       } else {
-        showError('Greška', result.message || 'Nije moguće ukloniti oglas');
+        showError(t.toasts.error, result.message || t.toasts.favoriteError);
       }
     } catch (err) {
-      showError('Greška', 'Došlo je do greške');
+      showError(t.toasts.error, t.toasts.genericError);
     }
   };
 
@@ -189,7 +189,7 @@ export default function FavoritesPage() {
                 )}
                 {/* Category badge */}
                 <span className="absolute top-3 left-3 text-xs font-medium bg-[#e85d45] text-white px-2 py-1 rounded">
-                  {resource.categoryId?.name || 'Kategorija'}
+                  {(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name || t.common.category}
                 </span>
                 {/* Favorite button */}
                 <button 
@@ -198,7 +198,7 @@ export default function FavoritesPage() {
                     handleRemoveFavorite(resource._id);
                   }}
                   className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  title="Ukloni iz omiljenih"
+                  title={t.resource.removeFromFavorites}
                 >
                   <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />

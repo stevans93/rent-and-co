@@ -16,13 +16,30 @@ const addListingSchema = z.object({
   rentalType: z.string().optional(),
   pricePerDay: z.coerce.number().min(0, 'Cena ne može biti negativna').optional(),
   currency: z.enum(['EUR', 'RSD', 'USD']),
-  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam']),
+  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam', 'draft']),
   location: z.object({
     country: z.string().default('Srbija'),
     city: z.string().min(2, 'Grad je obavezan'),
     municipality: z.string().optional(),
     address: z.string().optional(),
   }),
+});
+
+// Draft schema with relaxed validation
+const draftSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  categoryId: z.string().optional(),
+  rentalType: z.string().optional(),
+  pricePerDay: z.coerce.number().optional(),
+  currency: z.enum(['EUR', 'RSD', 'USD']).optional(),
+  status: z.literal('draft'),
+  location: z.object({
+    country: z.string().optional(),
+    city: z.string().optional(),
+    municipality: z.string().optional(),
+    address: z.string().optional(),
+  }).optional(),
 });
 
 type AddListingFormData = z.infer<typeof addListingSchema>;
@@ -44,12 +61,66 @@ export default function AddListing() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Location state
   const [selectedCountry, setSelectedCountry] = useState('Srbija');
   const [selectedCity, setSelectedCity] = useState('');
+
+  // Features/Options state
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [customFeature, setCustomFeature] = useState('');
+
+  // Available features list (stored as Serbian keys for translation lookup)
+  const availableFeatures = [
+    'klima',
+    'parking',
+    'wifi',
+    'internet',
+    'tv',
+    'grejanje',
+    'ves masina',
+    'masina za sudove',
+    'frizider',
+    'zamrzivac',
+    'mikrotalasna',
+    'pegla',
+    'fen',
+    'terasa',
+    'balkon',
+    'dvoriste',
+    'bazen',
+    'kucni ljubimci dozvoljeni',
+    'lift',
+    'alarm',
+    'garaza',
+    'kamera',
+  ];
+
+  // Get translated feature name
+  const getFeatureName = (key: string) => {
+    return (t.featureNames as Record<string, string>)[key] || key;
+  };
+
+  // Toggle feature selection
+  const toggleFeature = (feature: string) => {
+    setSelectedFeatures(prev => 
+      prev.includes(feature) 
+        ? prev.filter(f => f !== feature) 
+        : [...prev, feature]
+    );
+  };
+
+  // Add custom feature
+  const addCustomFeature = () => {
+    const trimmed = customFeature.trim();
+    if (trimmed && !selectedFeatures.includes(trimmed.toLowerCase())) {
+      setSelectedFeatures(prev => [...prev, trimmed.toLowerCase()]);
+      setCustomFeature('');
+    }
+  };
 
   // Helper to get translated category name
   const getCategoryName = (slug: string, fallbackName: string) => {
@@ -182,7 +253,7 @@ export default function AddListing() {
   const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 10) {
-      warning('Previše slika', 'Maksimalno 10 fotografija po oglasu');
+      warning(t.toasts.tooManyImages, t.toasts.tooManyImagesDesc);
       return;
     }
 
@@ -234,16 +305,99 @@ export default function AddListing() {
     } else if (step === 2) {
       // Images step - no validation needed
     } else if (step === 3) {
+      // Features step - no validation needed
+    } else if (step === 4) {
       fieldsToValidate = ['location'];
     }
     
     const isValid = await trigger(fieldsToValidate as any);
-    if (isValid || step === 2) {
-      setStep(prev => Math.min(prev + 1, 4));
+    if (isValid || step === 2 || step === 3) {
+      setStep(prev => Math.min(prev + 1, 5));
     }
   };
 
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  // Cancel listing creation
+  const handleCancel = () => {
+    if (window.confirm(t.dashboard.confirmCancel || 'Da li ste sigurni da želite da otkažete? Svi podaci će biti izgubljeni.')) {
+      navigate('/dashboard/my-listings');
+    }
+  };
+
+  // Save as draft
+  const saveAsDraft = async () => {
+    if (!token) {
+      showError(t.toasts.mustBeLoggedIn || 'Morate biti prijavljeni');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    setSubmitError(null);
+
+    try {
+      const formData = watch();
+      
+      // Prepare draft data with relaxed validation
+      const draftData = {
+        title: formData.title || t.dashboard.untitledDraft || 'Neimenovani nacrt',
+        description: formData.description || '',
+        categoryId: formData.categoryId || categories[0]?._id || '',
+        pricePerDay: formData.pricePerDay || 0,
+        currency: formData.currency || 'EUR',
+        status: 'draft' as const,
+        location: {
+          country: formData.location?.country || selectedCountry || 'Srbija',
+          city: formData.location?.city || selectedCity || 'Beograd',
+          municipality: formData.location?.municipality || '',
+          address: formData.location?.address || '',
+        },
+        options: selectedFeatures,
+      };
+
+      // Create the draft resource using special draft endpoint
+      const response = await fetch(`${API_URL}/resources/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(draftData),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || 'Greška pri čuvanju nacrta');
+      }
+
+      const resourceId = result.data._id;
+
+      // Upload images if any
+      if (images.length > 0) {
+        const imageFormData = new FormData();
+        images.forEach(image => {
+          imageFormData.append('images', image);
+        });
+
+        await fetch(`${API_URL}/resources/${resourceId}/images`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: imageFormData,
+        });
+      }
+
+      success(t.toasts.draftSaved || 'Nacrt sačuvan', t.toasts.draftSavedDesc || 'Možete nastaviti sa uređivanjem kasnije.');
+      navigate('/dashboard/my-listings');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      showError(t.toasts.draftSaveError || 'Greška pri čuvanju nacrta');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
 
   // Submit form
   const onSubmit = async (data: AddListingFormData) => {
@@ -262,6 +416,7 @@ export default function AddListing() {
         pricePerDay: (data.status === 'menjam' || data.status === 'poklanjam') 
           ? 0 
           : (data.pricePerDay || 0),
+        options: selectedFeatures, // Add selected features/options
       };
 
       // Debug logging - remove after fixing
@@ -323,13 +478,13 @@ export default function AddListing() {
       }
 
       // Navigate to my listings
-      success('Oglas uspešno kreiran!', 'Vaš oglas je objavljen i sada je vidljiv svima.');
+      success(t.toasts.listingCreated, t.toasts.listingCreatedDesc);
       navigate('/dashboard/my-listings');
     } catch (error) {
       console.error('Error creating listing:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Greška pri kreiranju oglasa';
+      const errorMessage = error instanceof Error ? error.message : t.toasts.createError;
       setSubmitError(errorMessage);
-      showError('Greška pri kreiranju oglasa', errorMessage);
+      showError(t.toasts.createError, errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -338,8 +493,9 @@ export default function AddListing() {
   const steps = [
     { num: 1, label: t.dashboard.basicInfo },
     { num: 2, label: t.dashboard.images },
-    { num: 3, label: t.dashboard.location },
-    { num: 4, label: t.dashboard.price },
+    { num: 3, label: t.resource.features },
+    { num: 4, label: t.dashboard.location },
+    { num: 5, label: t.dashboard.price },
   ];
 
   const rentalTypes = [
@@ -358,9 +514,21 @@ export default function AddListing() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.addListing}</h1>
-        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.basicInfo}</p>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.addListing}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t.dashboard.basicInfo}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          {t.dashboard.cancel || 'Otkaži'}
+        </button>
       </div>
 
       {/* Step Indicator */}
@@ -537,8 +705,102 @@ export default function AddListing() {
             </div>
           )}
 
-          {/* Step 3: Location */}
+          {/* Step 3: Features */}
           {step === 3 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.resource.features}</h2>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.selectFeatures || 'Izaberite karakteristike koje vaš proizvod/usluga poseduje'}</p>
+
+              {/* Feature Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {availableFeatures.map((feature) => (
+                  <button
+                    key={feature}
+                    type="button"
+                    onClick={() => toggleFeature(feature)}
+                    className={`flex items-center gap-2 p-3 border rounded-lg transition-all ${
+                      selectedFeatures.includes(feature)
+                        ? 'border-[#e85d45] bg-[#e85d45]/10 text-[#e85d45]'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-[#e85d45] text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <span className={`w-5 h-5 flex items-center justify-center border rounded ${
+                      selectedFeatures.includes(feature)
+                        ? 'bg-[#e85d45] border-[#e85d45]'
+                        : 'border-gray-400 dark:border-gray-500'
+                    }`}>
+                      {selectedFeatures.includes(feature) && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="text-sm">{getFeatureName(feature)}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Feature Input */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t.dashboard.addCustomFeature || 'Dodaj prilagođenu karakteristiku'}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customFeature}
+                    onChange={(e) => setCustomFeature(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomFeature())}
+                    placeholder={t.dashboard.customFeaturePlaceholder || 'Npr. Besplatan WiFi, Klima...'}
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomFeature}
+                    className="px-4 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors"
+                  >
+                    {t.common.add || 'Dodaj'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Selected Features Summary */}
+              {selectedFeatures.length > 0 && (
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-[#252525] rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    {t.dashboard.selectedFeatures || 'Izabrane karakteristike'} ({selectedFeatures.length}):
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFeatures.map((feature) => (
+                      <span
+                        key={feature}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-[#e85d45]/10 text-[#e85d45] rounded-full text-sm"
+                      >
+                        {getFeatureName(feature)}
+                        <button
+                          type="button"
+                          onClick={() => toggleFeature(feature)}
+                          className="hover:bg-[#e85d45]/20 rounded-full p-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 4: Location */}
+          {step === 4 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -625,8 +887,8 @@ export default function AddListing() {
             </div>
           )}
 
-          {/* Step 4: Price */}
-          {step === 4 && (
+          {/* Step 5: Price */}
+          {step === 5 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -709,12 +971,14 @@ export default function AddListing() {
           <div className="flex gap-3">
             <button
               type="button"
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              onClick={saveAsDraft}
+              disabled={isSavingDraft}
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t.dashboard.saveAsDraft}
+              {isSavingDraft ? (t.dashboard.saving || 'Čuvanje...') : t.dashboard.saveAsDraft}
             </button>
 
-            {step < 4 ? (
+            {step < 5 ? (
               <button
                 type="button"
                 onClick={nextStep}

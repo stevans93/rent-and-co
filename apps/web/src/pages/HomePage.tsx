@@ -45,7 +45,7 @@ export default function HomePage() {
           id: item._id || item.id,
           title: item.title,
           address: item.location ? `${item.location.address || ''}, ${item.location.city}` : '',
-          category: item.categoryId?.name || t.common.category,
+          category: (t.categories as Record<string, string>)[item.categoryId?.slug || ''] || item.categoryId?.name || t.common.category,
           price: item.pricePerDay,
           currency: item.currency || 'EUR',
           isFeatured: true,

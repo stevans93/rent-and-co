@@ -31,8 +31,8 @@ export default function RegisterPage() {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Lozinke se ne poklapaju');
-      warning('Pažnja', 'Lozinke se ne poklapaju');
+      setError(t.toasts.passwordsNoMatch);
+      warning(t.toasts.warning, t.toasts.passwordsNoMatch);
       setIsLoading(false);
       return;
     }
@@ -40,11 +40,11 @@ export default function RegisterPage() {
     const result = await register(formData);
     
     if (result.success) {
-      success('Uspešna registracija!', 'Vaš nalog je kreiran. Dobrodošli na Rent&Co!');
+      success(t.toasts.registerSuccess, t.toasts.registerWelcome);
       navigate('/dashboard', { replace: true });
     } else {
-      setError(result.message || 'Greška pri registraciji');
-      showError('Greška pri registraciji', result.message || 'Pokušajte ponovo');
+      setError(result.message || t.toasts.registerError);
+      showError(t.toasts.registerError, result.message || t.toasts.registerErrorDesc);
     }
     
     setIsLoading(false);

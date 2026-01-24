@@ -201,7 +201,6 @@ export default function DashboardFavorites() {
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm(t.dashboard?.confirmClearAll || 'Da li ste sigurni da želite da uklonite sve omiljene oglase?')) return;
     if (!token) return;
 
     try {
@@ -238,6 +237,15 @@ export default function DashboardFavorites() {
     setCurrentPage(1);
   };
 
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('');
+    setCurrentPage(1);
+    info(t.dashboard?.filtersCleared || 'Filtri očišćeni', t.dashboard?.filtersClearedDesc || 'Svi filtri su resetovani');
+  };
+
+  const hasActiveFilters = searchQuery !== '' || selectedCategory !== '';
+
   return (
     <div>
       {/* Header */}
@@ -248,17 +256,33 @@ export default function DashboardFavorites() {
             {totalCount} {totalCount === 1 ? (t.dashboard.savedListing || 'sačuvan oglas') : (t.dashboard.savedListings || 'sačuvanih oglasa')}
           </p>
         </div>
-        {totalCount > 0 && (
+        <div className="flex flex-wrap gap-2 self-start">
           <button
-            onClick={handleClearAll}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2 self-start"
+            onClick={handleClearFilters}
+            disabled={!hasActiveFilters}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2 ${
+              hasActiveFilters 
+                ? 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+            }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            {t.dashboard.clearAll || 'Obriši sve'}
+            {t.dashboard?.clearFilters || 'Očisti filtere'}
           </button>
-        )}
+          {totalCount > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {t.dashboard?.clearAllFavorites || 'Obriši sve oglase'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}

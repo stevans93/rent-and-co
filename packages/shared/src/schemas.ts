@@ -94,7 +94,7 @@ export const resourceSchema = z.object({
   pricePerDay: z.number().min(0, 'Cena ne može biti negativna').optional(),
   currency: z.enum(['EUR', 'RSD', 'USD']).default('EUR'),
   isFeatured: z.boolean().default(false),
-  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).default('pending'),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam', 'draft']).default('pending'),
   options: z.array(z.string()).optional(),
   location: locationSchema,
   images: z.array(imageSchema).optional(),
@@ -112,7 +112,7 @@ export const createResourceSchema = z.object({
   categoryId: z.string().min(1, 'Kategorija je obavezna'),
   pricePerDay: z.number().min(0, 'Cena ne može biti negativna').optional().default(0),
   currency: z.enum(['EUR', 'RSD', 'USD']).default('EUR'),
-  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam']).default('active'),
+  status: z.enum(['active', 'inactive', 'pending', 'menjam', 'poklanjam', 'draft']).default('active'),
   rentalType: z.string().optional(),
   options: z.array(z.string()).optional(),
   location: locationSchema,
@@ -120,9 +120,29 @@ export const createResourceSchema = z.object({
   extraInfo: z.array(extraInfoSchema).optional(),
 });
 
+// Create Draft Resource DTO - relaxed validation for drafts
+export const createDraftResourceSchema = z.object({
+  title: z.string().max(100).optional().default('Nacrt'),
+  description: z.string().max(5000).optional().default(''),
+  categoryId: z.string().optional(),
+  pricePerDay: z.number().min(0).optional().default(0),
+  currency: z.enum(['EUR', 'RSD', 'USD']).default('EUR'),
+  status: z.literal('draft'),
+  rentalType: z.string().optional(),
+  options: z.array(z.string()).optional(),
+  location: z.object({
+    country: z.string().default('Srbija'),
+    city: z.string().default(''),
+    municipality: z.string().optional(),
+    address: z.string().optional(),
+  }),
+  images: z.array(imageSchema).optional(),
+  extraInfo: z.array(extraInfoSchema).optional(),
+});
+
 // Update Resource DTO
 export const updateResourceSchema = createResourceSchema.partial().extend({
-  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam', 'draft']).optional(),
   isFeatured: z.boolean().optional(),
 });
 
@@ -140,7 +160,7 @@ export const resourceQuerySchema = z.object({
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   options: z.array(z.string()).or(z.string().transform(s => s.split(','))).optional(),
-  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam']).optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'rented', 'menjam', 'poklanjam', 'draft']).optional(),
   isFeatured: z.coerce.boolean().optional(),
   ownerId: z.string().optional(),
   

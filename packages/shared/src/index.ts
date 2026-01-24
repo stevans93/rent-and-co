@@ -19,6 +19,7 @@ export {
   // Resource
   resourceSchema,
   createResourceSchema,
+  createDraftResourceSchema,
   updateResourceSchema,
   resourceQuerySchema,
   

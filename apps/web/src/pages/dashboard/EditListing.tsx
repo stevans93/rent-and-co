@@ -88,6 +88,11 @@ export default function EditListing() {
     },
   });
 
+  // Helper to get translated category name
+  const getCategoryName = (slug: string, fallbackName: string): string => {
+    return (t.categories as Record<string, string>)[slug] || fallbackName;
+  };
+
   const currentStatus = watch('status');
   const isPriceRequired = currentStatus !== 'menjam' && currentStatus !== 'poklanjam';
 
@@ -139,13 +144,13 @@ export default function EditListing() {
             // Set existing images
             setExistingImages(listing.images || []);
           } else {
-            showError('Greška', 'Oglas nije pronađen');
+            showError(t.toasts.error, t.toasts.listingNotFound);
             navigate('/dashboard/my-listings');
           }
         }
       } catch (error) {
         console.error('Error fetching listing:', error);
-        showError('Greška', 'Došlo je do greške pri učitavanju oglasa');
+        showError(t.toasts.error, t.toasts.loadError);
       }
     };
     
@@ -222,7 +227,7 @@ export default function EditListing() {
     const totalImages = existingImages.length + newImages.length + files.length;
     
     if (totalImages > 10) {
-      warning('Previše slika', 'Maksimalno 10 fotografija po oglasu');
+      warning(t.toasts.tooManyImages, t.toasts.tooManyImagesDesc);
       return;
     }
 
@@ -260,11 +265,11 @@ export default function EditListing() {
       
       if (response.ok) {
         setExistingImages(prev => prev.filter((_, i) => i !== index));
-        success('Slika obrisana', 'Slika je uspešno uklonjena');
+        success(t.toasts.imageDeleted, t.toasts.imageDeletedDesc);
       }
     } catch (error) {
       console.error('Error deleting image:', error);
-      showError('Greška', 'Nije moguće obrisati sliku');
+      showError(t.toasts.error, t.toasts.imageDeleteError);
     }
   };
 
@@ -316,13 +321,13 @@ export default function EditListing() {
         });
       }
 
-      success('Oglas ažuriran!', 'Vaše izmene su sačuvane.');
+      success(t.toasts.listingUpdated, t.toasts.listingUpdatedDesc);
       navigate('/dashboard/my-listings');
     } catch (error) {
       console.error('Error updating listing:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Greška pri ažuriranju oglasa';
+      const errorMessage = error instanceof Error ? error.message : t.toasts.updateError;
       setSubmitError(errorMessage);
-      showError('Greška pri ažuriranju oglasa', errorMessage);
+      showError(t.toasts.updateError, errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -367,9 +372,9 @@ export default function EditListing() {
                 {...register('categoryId')}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
               >
-                <option value="">Izaberite kategoriju</option>
+                <option value="">{t.listings?.selectCategory || 'Izaberite kategoriju'}</option>
                 {categories.map(cat => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  <option key={cat._id} value={cat._id}>{getCategoryName(cat.slug, cat.name)}</option>
                 ))}
               </select>
               {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>}

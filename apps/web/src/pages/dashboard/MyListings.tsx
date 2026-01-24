@@ -8,7 +8,7 @@ interface Listing {
   _id: string;
   title: string;
   slug: string;
-  status: 'active' | 'pending' | 'inactive' | 'rented' | 'menjam' | 'poklanjam';
+  status: 'active' | 'pending' | 'inactive' | 'rented' | 'menjam' | 'poklanjam' | 'draft';
   pricePerDay: number;
   currency: string;
   views: number;
@@ -44,6 +44,7 @@ export default function MyListings() {
   const { success, error: showError } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [drafts, setDrafts] = useState<Listing[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search for 300ms
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -148,15 +149,20 @@ export default function MyListings() {
       
       const result = await response.json();
       if (result.success) {
-        setListings(result.data || []);
+        const allListings = result.data || [];
+        // Separate drafts from regular listings
+        const draftListings = allListings.filter((l: Listing) => l.status === 'draft');
+        const regularListings = allListings.filter((l: Listing) => l.status !== 'draft');
+        setDrafts(draftListings);
+        setListings(regularListings);
         if (result.pagination) {
           setPagination(result.pagination);
         } else {
           setPagination({
-            total: result.data?.length || 0,
+            total: regularListings.length,
             page: currentPage,
             limit: perPage,
-            pages: Math.ceil((result.data?.length || 0) / perPage)
+            pages: Math.ceil(regularListings.length / perPage)
           });
         }
       }
@@ -179,14 +185,14 @@ export default function MyListings() {
       if (response.ok) {
         setListings(listings.filter(l => l._id !== deleteModal.listing?._id));
         setDeleteModal({ open: false, listing: null });
-        success('Oglas obrisan', 'Vaš oglas je uspešno obrisan');
+        success(t.toasts.listingDeleted, t.toasts.listingDeletedDesc);
         fetchMyListings();
       } else {
-        showError('Greška', 'Nije moguće obrisati oglas');
+        showError(t.toasts.error, t.toasts.deleteError);
       }
     } catch (error) {
       console.error('Error deleting listing:', error);
-      showError('Greška', 'Došlo je do greške pri brisanju oglasa');
+      showError(t.toasts.error, t.toasts.deleteErrorDesc);
     }
   };
 
@@ -198,6 +204,7 @@ export default function MyListings() {
       rented: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
       menjam: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
       poklanjam: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+      draft: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     };
     const labels: Record<string, string> = {
       active: t.dashboard.active,
@@ -206,6 +213,7 @@ export default function MyListings() {
       rented: 'Iznajmljeno',
       menjam: 'Menjam',
       poklanjam: 'Poklanjam',
+      draft: t.dashboard.drafts || 'Nacrt',
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.inactive}`}>
@@ -239,6 +247,56 @@ export default function MyListings() {
           {t.dashboard.addNewListing}
         </Link>
       </div>
+
+      {/* Drafts Section - Compact */}
+      {drafts.length > 0 && (
+        <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg border border-amber-200/50 dark:border-amber-800/30 mb-6 p-3">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              {t.dashboard.drafts || 'Nacrti'} ({drafts.length})
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {drafts.map((draft) => (
+              <div key={draft._id} className="flex items-center gap-2 bg-white dark:bg-[#252525] rounded-lg px-3 py-2 border border-amber-200/50 dark:border-amber-800/30 group">
+                {draft.images?.[0] ? (
+                  <img
+                    src={getImageUrl(draft.images[0].url)}
+                    alt={draft.title}
+                    className="w-8 h-8 rounded object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+                  {draft.title || (t.dashboard.untitledDraft || 'Nacrt')}
+                </span>
+                <Link
+                  to={`/dashboard/edit-listing/${draft._id}`}
+                  className="text-xs px-2 py-1 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded font-medium transition-colors"
+                >
+                  {t.dashboard.continueDraft || 'Nastavi'}
+                </Link>
+                <button
+                  onClick={() => setDeleteModal({ open: true, listing: draft })}
+                  className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Listings Table */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800">

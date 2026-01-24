@@ -47,7 +47,7 @@ export default function ResourceCard({
   const isFavorite = checkIsFavorite(String(resource.id));
 
   // SEO-friendly alt text
-  const imageAlt = `${resource.title} — ${resource.city || resource.address} — iznajmljivanje po danu`;
+  const imageAlt = `${resource.title} — ${resource.city || resource.address} — ${t.resource.rentalPerDay}`;
 
   const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();

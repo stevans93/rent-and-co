@@ -46,14 +46,14 @@ export default function DashboardSettings() {
       if (result.success) {
         updateUser(result.data);
         setSuccess(t.dashboard.profileUpdated);
-        toast.success('Profil ažuriran', 'Vaši podaci su uspešno sačuvani');
+        toast.success(t.toasts.profileUpdated, t.toasts.profileUpdatedDesc);
       } else {
         setError(result.message || t.dashboard.errorUpdating);
-        toast.error('Greška', result.message || t.dashboard.errorUpdating);
+        toast.error(t.toasts.error, result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
       setError(t.dashboard.errorUpdating);
-      toast.error('Greška', t.dashboard.errorUpdating);
+      toast.error(t.toasts.error, t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +64,7 @@ export default function DashboardSettings() {
     
     if (passwords.newPassword !== passwords.confirmPassword) {
       setError(t.dashboard.passwordsNoMatch);
-      toast.warning('Pažnja', t.dashboard.passwordsNoMatch);
+      toast.warning(t.toasts.warning, t.dashboard.passwordsNoMatch);
       return;
     }
 
@@ -89,15 +89,15 @@ export default function DashboardSettings() {
 
       if (result.success) {
         setSuccess(t.dashboard.passwordChanged);
-        toast.success('Lozinka promenjena', 'Vaša lozinka je uspešno ažurirana');
+        toast.success(t.toasts.passwordChanged, t.toasts.passwordChangedDesc);
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
         setError(result.message || t.dashboard.errorUpdating);
-        toast.error('Greška', result.message || t.dashboard.errorUpdating);
+        toast.error(t.toasts.error, result.message || t.dashboard.errorUpdating);
       }
     } catch (err) {
       setError(t.dashboard.errorUpdating);
-      toast.error('Greška', t.dashboard.errorUpdating);
+      toast.error(t.toasts.error, t.dashboard.errorUpdating);
     } finally {
       setIsLoading(false);
     }
