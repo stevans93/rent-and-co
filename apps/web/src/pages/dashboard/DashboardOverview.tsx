@@ -39,19 +39,19 @@ function StatCard({
   iconColor?: string;
 }) {
   return (
-    <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
+    <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1 truncate">{label}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
           {change && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               <span className={change.startsWith('+') ? 'text-green-500' : 'text-red-500'}>{change}</span>
               {changeLabel && ` ${changeLabel}`}
             </p>
           )}
         </div>
-        <div className={`p-3 rounded-lg ${iconBg}`}>
+        <div className={`p-2 sm:p-3 rounded-lg ${iconBg} flex-shrink-0 ml-2`}>
           <div className={iconColor}>{icon}</div>
         </div>
       </div>
@@ -70,12 +70,12 @@ function ActivityItem({
   time: string;
 }) {
   return (
-    <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-0">
-      <div>
-        <p className="font-medium text-gray-900 dark:text-white">{title}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 last:border-0 gap-1 sm:gap-4">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate">{title}</p>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{description}</p>
       </div>
-      <p className="text-sm text-gray-400 whitespace-nowrap ml-4">{time}</p>
+      <p className="text-xs sm:text-sm text-gray-400 whitespace-nowrap">{time}</p>
     </div>
   );
 }
@@ -99,14 +99,16 @@ function QuickActionCard({
   return (
     <Link 
       to={to}
-      className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 hover:border-[#e85d45] dark:hover:border-[#e85d45] transition-colors group"
+      className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 hover:border-[#e85d45] dark:hover:border-[#e85d45] transition-colors group"
     >
-      <div className="flex flex-col items-center text-center">
-        <div className={`p-4 rounded-full ${iconBg} mb-4 group-hover:scale-110 transition-transform`}>
+      <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
+        <div className={`p-3 sm:p-4 rounded-full ${iconBg} sm:mb-4 group-hover:scale-110 transition-transform flex-shrink-0`}>
           <div className={iconColor}>{icon}</div>
         </div>
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        <div className="min-w-0">
+          <h3 className="font-semibold text-gray-900 dark:text-white sm:mb-1 text-sm sm:text-base">{title}</h3>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">{description}</p>
+        </div>
       </div>
     </Link>
   );
@@ -130,7 +132,7 @@ export default function DashboardOverview() {
       if (!token) return;
       
       try {
-        const response = await fetch(`${API_URL}/user/dashboard/stats`, {
+        const response = await fetch(`${API_URL}/users/dashboard/stats`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -173,13 +175,13 @@ export default function DashboardOverview() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.welcomeBack}</h1>
-        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.activityOverview}</p>
+      <div className="mb-4 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.welcomeBack}</h1>
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">{t.dashboard.activityOverview}</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
         <StatCard
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,8 +222,8 @@ export default function DashboardOverview() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h2>
+      <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 mb-4 sm:mb-8">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">{t.dashboard.recentActivity}</h2>
         <div>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -243,7 +245,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
         <QuickActionCard
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -3,6 +3,15 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useLanguage, useTheme, useAuth } from '../../context';
 import { Language } from '../../i18n';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', '');
+
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -194,8 +203,12 @@ export default function Navbar() {
               >
                 {user ? (
                   <>
-                    <div className="w-8 h-8 rounded-full bg-[#e85d45] flex items-center justify-center text-white font-medium">
-                      {user.firstName.charAt(0).toUpperCase()}
+                    <div className="w-8 h-8 rounded-full bg-[#e85d45] flex items-center justify-center text-white font-medium overflow-hidden">
+                      {user.profileImage ? (
+                        <img src={getImageUrl(user.profileImage)} alt={user.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        user.firstName.charAt(0).toUpperCase()
+                      )}
                     </div>
                   </>
                 ) : (
@@ -404,8 +417,12 @@ export default function Navbar() {
               {user ? (
                 <>
                   <div className="flex items-center gap-3 py-2">
-                    <div className="w-10 h-10 rounded-full bg-[#e85d45] flex items-center justify-center text-white font-medium">
-                      {user.firstName.charAt(0).toUpperCase()}
+                    <div className="w-10 h-10 rounded-full bg-[#e85d45] flex items-center justify-center text-white font-medium overflow-hidden">
+                      {user.profileImage ? (
+                        <img src={getImageUrl(user.profileImage)} alt={user.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        user.firstName.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">{user.firstName} {user.lastName}</p>

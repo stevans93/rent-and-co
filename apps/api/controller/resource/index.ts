@@ -296,18 +296,49 @@ export const getMyResources = async (req: Request, res: Response, next: NextFunc
 
     const {
       status,
+      category,
+      type,
       sort = "newest",
       page = "1",
       limit = "20",
       search,
-    } = req.query as { status?: string; sort?: string; page?: string; limit?: string; search?: string };
+    } = req.query as { status?: string; category?: string; type?: string; sort?: string; page?: string; limit?: string; search?: string };
 
     // Build filter - always filter by current user
     const filter: any = { ownerId: req.user._id };
 
-    // Status filter (optional)
+    // Status filter (active/inactive)
+    // "active" means active listings (includes active, menjam, poklanjam)
+    // "inactive" means inactive listings
     if (status && status !== 'all') {
-      filter.status = status;
+      if (status === 'active') {
+        // Active listings include: active, menjam, poklanjam
+        filter.status = { $in: ['active', 'menjam', 'poklanjam'] };
+      } else if (status === 'inactive') {
+        filter.status = 'inactive';
+      } else {
+        filter.status = status;
+      }
+    }
+
+    // Type filter (izdajem, menjam, poklanjam)
+    if (type && type !== 'all') {
+      if (type === 'izdajem') {
+        filter.status = 'active';
+      } else if (type === 'menjam') {
+        filter.status = 'menjam';
+      } else if (type === 'poklanjam') {
+        filter.status = 'poklanjam';
+      }
+    }
+
+    // Category filter (by slug)
+    if (category && category !== 'all') {
+      const Category = (await import("../../models/category")).default;
+      const cat = await Category.findOne({ slug: category });
+      if (cat) {
+        filter.categoryId = cat._id;
+      }
     }
 
     // Search filter (by title, city, or address)
@@ -418,16 +449,57 @@ export const getAdminResources = async (req: Request, res: Response, next: NextF
 
     const {
       status,
+      category,
+      type,
+      search,
       sort = "newest",
       page = "1",
       limit = "50",
-    } = req.query as { status?: string; sort?: string; page?: string; limit?: string };
+    } = req.query as { status?: string; category?: string; type?: string; search?: string; sort?: string; page?: string; limit?: string };
 
     // Build filter
     const filter: any = {};
 
+    // Status filter (active/inactive)
     if (status && status !== 'all') {
-      filter.status = status;
+      if (status === 'active') {
+        // Active listings include: active, menjam, poklanjam
+        filter.status = { $in: ['active', 'menjam', 'poklanjam'] };
+      } else if (status === 'inactive') {
+        filter.status = 'inactive';
+      } else {
+        filter.status = status;
+      }
+    }
+
+    // Type filter (izdajem, menjam, poklanjam)
+    if (type && type !== 'all') {
+      if (type === 'izdajem') {
+        filter.status = 'active';
+      } else if (type === 'menjam') {
+        filter.status = 'menjam';
+      } else if (type === 'poklanjam') {
+        filter.status = 'poklanjam';
+      }
+    }
+
+    // Category filter (by slug)
+    if (category && category !== 'all') {
+      const Category = (await import("../../models/category")).default;
+      const cat = await Category.findOne({ slug: category });
+      if (cat) {
+        filter.categoryId = cat._id;
+      }
+    }
+
+    // Search filter
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { 'location.city': searchRegex },
+        { 'location.address': searchRegex },
+      ];
     }
 
     // Sorting
@@ -449,7 +521,7 @@ export const getAdminResources = async (req: Request, res: Response, next: NextF
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const skip = (pageNum - 1) * limitNum;
 
-    const [resources, total] = await Promise.all([
+    const [resources, total, activeCount, inactiveCount] = await Promise.all([
       Resource.find(filter)
         .sort(sortOption)
         .skip(skip)
@@ -458,6 +530,8 @@ export const getAdminResources = async (req: Request, res: Response, next: NextF
         .populate("ownerId", "firstName lastName email")
         .lean(),
       Resource.countDocuments(filter),
+      Resource.countDocuments({ status: { $in: ['active', 'menjam', 'poklanjam'] } }),
+      Resource.countDocuments({ status: 'inactive' }),
     ]);
 
     const totalPages = Math.ceil(total / limitNum);
@@ -470,6 +544,11 @@ export const getAdminResources = async (req: Request, res: Response, next: NextF
         limit: limitNum,
         total,
         pages: totalPages,
+      },
+      stats: {
+        total: activeCount + inactiveCount,
+        active: activeCount,
+        inactive: inactiveCount,
       },
     });
   } catch (error) {

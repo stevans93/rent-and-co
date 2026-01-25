@@ -147,23 +147,23 @@ export default function DashboardPayments() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.payments}</h1>
-        <p className="text-gray-500 dark:text-gray-400">{t.dashboard.manageSubscription}</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.payments}</h1>
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">{t.dashboard.manageSubscription}</p>
       </div>
 
       {/* Current Plan Banner */}
-      <div className="bg-gradient-to-r from-[#e85d45] to-[#ff7b5a] rounded-xl p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#e85d45] to-[#ff7b5a] rounded-xl p-4 sm:p-6 text-white">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
           <div>
-            <p className="text-white/80 text-sm">{t.dashboard.currentPlan}</p>
-            <h2 className="text-2xl font-bold">{t.dashboard.pro}</h2>
-            <p className="text-white/80">{t.dashboard.planExpiresOn}: 10. {t.dashboard.february} 2026.</p>
+            <p className="text-white/80 text-xs sm:text-sm">{t.dashboard.currentPlan}</p>
+            <h2 className="text-xl sm:text-2xl font-bold">{t.dashboard.pro}</h2>
+            <p className="text-white/80 text-sm sm:text-base">{t.dashboard.planExpiresOn}: 10. {t.dashboard.february} 2026.</p>
           </div>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-white text-[#e85d45] rounded-lg font-medium hover:bg-white/90 transition-colors">
+          <div className="flex gap-2 sm:gap-3">
+            <button className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm bg-white text-[#e85d45] rounded-lg font-medium hover:bg-white/90 transition-colors">
               {t.dashboard.manageSubscription}
             </button>
           </div>
@@ -174,7 +174,7 @@ export default function DashboardPayments() {
       <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('plans')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+          className={`pb-2 sm:pb-3 px-1 text-xs sm:text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'plans'
               ? 'text-[#e85d45] border-[#e85d45]'
               : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'
@@ -184,7 +184,7 @@ export default function DashboardPayments() {
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+          className={`pb-2 sm:pb-3 px-1 text-xs sm:text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'history'
               ? 'text-[#e85d45] border-[#e85d45]'
               : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'
@@ -196,11 +196,11 @@ export default function DashboardPayments() {
 
       {/* Plans Tab */}
       {activeTab === 'plans' && (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-white dark:bg-[#1a1a1a] rounded-xl border-2 p-6 relative ${
+              className={`bg-white dark:bg-[#1a1a1a] rounded-xl border-2 p-4 sm:p-6 relative ${
                 plan.popular
                   ? 'border-[#e85d45]'
                   : 'border-gray-200 dark:border-gray-700'
@@ -211,21 +211,21 @@ export default function DashboardPayments() {
                   {t.dashboard.popular}
                 </span>
               )}
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{getPlanName(plan.nameKey)}</h3>
-                <div className="mt-3">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{getPlanName(plan.nameKey)}</h3>
+                <div className="mt-2 sm:mt-3">
+                  <span className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {plan.price === 0 ? t.dashboard.basic : `${plan.price.toLocaleString()} RSD`}
                   </span>
                   {plan.price > 0 && (
-                    <span className="text-gray-500 dark:text-gray-400">/{t.dashboard.monthly}</span>
+                    <span className="text-sm sm:text-base text-gray-500 dark:text-gray-400">/{t.dashboard.monthly}</span>
                   )}
                 </div>
               </div>
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 {plan.featureKeys.map((featureKey, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <li key={index} className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                    <svg className="w-4 sm:w-5 h-4 sm:h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     {getFeature(featureKey)}
@@ -233,7 +233,7 @@ export default function DashboardPayments() {
                 ))}
               </ul>
               <button
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                className={`w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${
                   currentPlan === plan.id
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
                     : plan.popular
@@ -251,55 +251,83 @@ export default function DashboardPayments() {
 
       {/* History Tab */}
       {activeTab === 'history' && (
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.date}</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionDescription}</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.amount}</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionStatus}</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {mockTransactions.map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                    {new Date(transaction.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {getTransactionDescription(transaction)}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                    {transaction.amount.toLocaleString()} RSD
-                  </td>
-                  <td className="px-6 py-4">
-                    {getStatusBadge(transaction.status)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
-                      {t.dashboard.download}
-                    </button>
-                  </td>
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {mockTransactions.map((transaction) => (
+              <div key={transaction.id} className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{getTransactionDescription(transaction)}</p>
+                  {getStatusBadge(transaction.status)}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">{transaction.amount.toLocaleString()} RSD</p>
+                  </div>
+                  <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
+                    {t.dashboard.download}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {mockTransactions.length === 0 && (
+              <div className="text-center py-12 bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noDataAvailable}</p>
+              </div>
+            )}
+          </div>
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.date}</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionDescription}</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.amount}</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.transactionStatus}</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {mockTransactions.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noDataAvailable}</p>
-            </div>
-          )}
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {mockTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {getTransactionDescription(transaction)}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                      {transaction.amount.toLocaleString()} RSD
+                    </td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(transaction.status)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
+                        {t.dashboard.download}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {mockTransactions.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">{t.dashboard.noDataAvailable}</p>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Payment Methods */}
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.cardInfo}</h3>
-        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">{t.dashboard.cardInfo}</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-8 bg-gradient-to-r from-gray-700 to-gray-900 rounded flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-10 sm:w-12 h-6 sm:h-8 bg-gradient-to-r from-gray-700 to-gray-900 rounded flex items-center justify-center text-white text-[10px] sm:text-xs font-bold">
               VISA
             </div>
             <div>
@@ -307,12 +335,12 @@ export default function DashboardPayments() {
               <p className="text-xs text-gray-500 dark:text-gray-400">{t.dashboard.validThru} 12/27</p>
             </div>
           </div>
-          <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium">
+          <button className="text-[#e85d45] hover:text-[#d54d35] text-sm font-medium self-start sm:self-center">
             {t.dashboard.edit}
           </button>
         </div>
-        <button className="mt-4 text-[#e85d45] hover:text-[#d54d35] text-sm font-medium flex items-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button className="mt-3 sm:mt-4 text-[#e85d45] hover:text-[#d54d35] text-sm font-medium flex items-center gap-2">
+          <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           {t.dashboard.addNewPaymentMethod}

@@ -16,9 +16,11 @@ export const getFavorites = async (req: Request, res: Response, next: NextFuncti
     const {
       search,
       category,
+      status,
+      type,
       page = "1",
       limit = "20",
-    } = req.query as { search?: string; category?: string; page?: string; limit?: string };
+    } = req.query as { search?: string; category?: string; status?: string; type?: string; page?: string; limit?: string };
 
     const user = await User.findById(req.user._id).lean();
 
@@ -29,8 +31,33 @@ export const getFavorites = async (req: Request, res: Response, next: NextFuncti
     // Build filter
     const filter: any = {
       _id: { $in: user.favorites },
-      status: "active",
     };
+
+    // Status filter (active/inactive)
+    if (status && status !== 'all' && status !== '') {
+      if (status === 'active') {
+        // Active listings include: active, menjam, poklanjam
+        filter.status = { $in: ['active', 'menjam', 'poklanjam'] };
+      } else if (status === 'inactive') {
+        filter.status = 'inactive';
+      } else {
+        filter.status = status;
+      }
+    } else {
+      // Default: show all active listings (active, menjam, poklanjam)
+      filter.status = { $in: ['active', 'menjam', 'poklanjam'] };
+    }
+
+    // Type filter (izdajem, menjam, poklanjam)
+    if (type && type !== 'all' && type !== '') {
+      if (type === 'izdajem') {
+        filter.status = 'active';
+      } else if (type === 'menjam') {
+        filter.status = 'menjam';
+      } else if (type === 'poklanjam') {
+        filter.status = 'poklanjam';
+      }
+    }
 
     // Search filter
     if (search && search.trim()) {
@@ -53,9 +80,9 @@ export const getFavorites = async (req: Request, res: Response, next: NextFuncti
       .populate("ownerId", "firstName lastName profileImage")
       .lean();
 
-    // Category filter (after populate)
-    if (category && category.trim()) {
-      favorites = favorites.filter((f: any) => f.categoryId?.name === category);
+    // Category filter (after populate) - filter by slug
+    if (category && category.trim() && category !== 'all') {
+      favorites = favorites.filter((f: any) => f.categoryId?.slug === category);
     }
 
     const total = favorites.length;

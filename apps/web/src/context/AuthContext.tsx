@@ -8,8 +8,12 @@ interface User {
   firstName: string;
   lastName: string;
   phone?: string;
+  city?: string;
+  address?: string;
   profileImage?: string;
   role: 'user' | 'admin' | 'moderator';
+  emailNotifications?: boolean;
+  marketingEmails?: boolean;
 }
 
 interface AuthContextType {

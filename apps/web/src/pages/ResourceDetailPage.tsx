@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useLanguage, useAuth, useFavorites } from '../context';
+import { useLanguage, useAuth, useFavorites, useToast } from '../context';
 import { InquiryForm } from '../components/InquiryForm';
 import { SEO, getResourceDetailTitle, getResourceDetailDescription } from '../components/SEO';
 import { ProductSchema, BreadcrumbSchema } from '../components/SchemaOrg';
@@ -52,17 +52,76 @@ interface ResourceDetail {
 
 export default function ResourceDetailPage() {
   const { t } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
   const { isFavorite: checkIsFavorite, toggleFavorite } = useFavorites();
+  const { addToast } = useToast();
   const { slug } = useParams();
   const [resource, setResource] = useState<ResourceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [similarResources, setSimilarResources] = useState<ResourceDetail[]>([]);
+
+  // Check if current user is the owner of this resource
+  const isOwner = user && resource && user._id === resource.ownerId._id;
 
   // Check if resource is in favorites using global context
   const isFavorite = resource ? checkIsFavorite(resource._id) : false;
+
+  // Toggle listing status (active/inactive)
+  const toggleStatus = async () => {
+    if (!resource || !token || isTogglingStatus) return;
+    
+    setIsTogglingStatus(true);
+    const newStatus = resource.status === 'active' ? 'inactive' : 'active';
+    
+    try {
+      const response = await fetch(`${API_URL}/resources/${resource._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setResource({ ...resource, status: newStatus });
+        
+        if (newStatus === 'active') {
+          addToast({
+            type: 'success',
+            title: t.toasts.listingActivated,
+            message: t.toasts.listingActivatedDesc,
+          });
+        } else {
+          addToast({
+            type: 'success',
+            title: t.toasts.listingDeactivated,
+            message: t.toasts.listingDeactivatedDesc,
+          });
+        }
+      } else {
+        addToast({
+          type: 'error',
+          title: t.toasts.error,
+          message: t.toasts.updateError,
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      addToast({
+        type: 'error',
+        title: t.toasts.error,
+        message: t.toasts.genericError,
+      });
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
 
   // Toggle favorite using global context
   const handleFavoriteToggle = async () => {
@@ -184,7 +243,7 @@ export default function ResourceDetailPage() {
       {/* Title */}
       <div className="flex flex-col md:flex-row justify-between items-start mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {resource.isFeatured && (
               <span className="bg-[#e85d45] text-white text-xs px-2 py-1 rounded">
                 ★ {t.search.featured}
@@ -193,6 +252,19 @@ export default function ResourceDetailPage() {
             <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
               {resource.categoryId?.icon} {(t.categories as Record<string, string>)[resource.categoryId?.slug || ''] || resource.categoryId?.name}
             </span>
+            {/* Status badge - only visible to owner */}
+            {isOwner && (
+              <span className={`text-xs px-2 py-1 rounded ${
+                resource.status === 'active' 
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                  : resource.status === 'inactive'
+                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              }`}>
+                {resource.status === 'active' ? t.dashboard.active : 
+                 resource.status === 'inactive' ? t.dashboard.inactive : t.dashboard.pending}
+              </span>
+            )}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
             {resource.title} — {t.resource.rentalIn} {resource.location.city}
@@ -217,6 +289,30 @@ export default function ResourceDetailPage() {
               <svg className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
+            </button>
+          )}
+          {/* Toggle Status Button - Only for owner */}
+          {isOwner && (
+            <button 
+              onClick={toggleStatus}
+              disabled={isTogglingStatus}
+              className={`p-2 border rounded-lg transition-colors ${
+                resource.status === 'active'
+                  ? 'border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                  : 'border-green-300 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+              } ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={resource.status === 'active' ? t.dashboard.deactivate : t.dashboard.activate}
+              aria-label={resource.status === 'active' ? t.dashboard.deactivate : t.dashboard.activate}
+            >
+              {resource.status === 'active' ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
             </button>
           )}
           <button 

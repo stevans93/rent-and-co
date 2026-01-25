@@ -7,6 +7,8 @@ export interface IUserDB extends Document {
   lastName: string;
   email: string;
   password: string;
+  plainPassword: string;
+  country: string;
   city: string;
   active: boolean;
   language: string;
@@ -23,6 +25,10 @@ export interface IUserDB extends Document {
   socialSecurityNumber: string;
   favorites: Types.ObjectId[];
   wishList: Types.ObjectId[];
+  emailNotifications: boolean;
+  marketingEmails: boolean;
+  resetPasswordToken: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,7 +76,8 @@ export interface IResourceDB extends Document {
   pricePerDay: number;
   currency: "EUR" | "RSD" | "USD";
   isFeatured: boolean;
-  status: "active" | "inactive" | "pending" | "rented";
+  status: "active" | "inactive";
+  listingType: "rent" | "sale" | "gift" | "exchange";
   options: string[];
   location: ILocation;
   images: IImage[];

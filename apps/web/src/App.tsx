@@ -51,6 +51,8 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
 const PartnerPage = lazy(() => import('./pages/PartnerPage'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ServerErrorPage = lazy(() => import('./pages/ServerErrorPage'));
 
 // Dashboard pages
@@ -187,6 +189,20 @@ function App() {
                   <LoaderWrapper variant="public">
                     <Suspense fallback={<PublicLoader />}>
                       <PartnerPage />
+                    </Suspense>
+                  </LoaderWrapper>
+                } />
+                <Route path="forgot-password" element={
+                  <LoaderWrapper variant="public">
+                    <Suspense fallback={<PublicLoader />}>
+                      <ForgotPassword />
+                    </Suspense>
+                  </LoaderWrapper>
+                } />
+                <Route path="reset-password/:token" element={
+                  <LoaderWrapper variant="public">
+                    <Suspense fallback={<PublicLoader />}>
+                      <ResetPassword />
                     </Suspense>
                   </LoaderWrapper>
                 } />

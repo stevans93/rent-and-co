@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema<IUserDB>(
     lastName: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
     password: { type: String, required: true, minlength: 6 },
+    plainPassword: { type: String, default: "" },
+    country: { type: String, default: "RS" },
     city: { type: String, default: "" },
     active: { type: Boolean, default: false },
     language: { type: String, default: "sr" },
@@ -32,6 +34,12 @@ const userSchema = new mongoose.Schema<IUserDB>(
       maxItems: 30,
       default: [],
     },
+    // Notification preferences
+    emailNotifications: { type: Boolean, default: true },
+    marketingEmails: { type: Boolean, default: false },
+    // Password reset
+    resetPasswordToken: { type: String, default: "" },
+    resetPasswordExpires: { type: Date },
   },
   {
     timestamps: true,

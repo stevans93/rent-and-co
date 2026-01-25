@@ -22,7 +22,7 @@ server.use(express.json({ limit: "10mb" }));
 server.use(express.urlencoded({ extended: true }));
 
 // Static files - serve uploaded images
-server.use("/uploads", express.static(path.join(__dirname, "uploads")));
+server.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Security headers (basic, without helmet for now)
 server.use((req, res, next) => {

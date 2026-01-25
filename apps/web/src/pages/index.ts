@@ -11,3 +11,5 @@ export { default as PricingPage } from './PricingPage';
 export { default as TermsPage } from './TermsPage';
 export { default as PrivacyPage } from './PrivacyPage';
 export { default as FAQPage } from './FAQPage';
+export { default as ForgotPassword } from './ForgotPassword';
+export { default as ResetPassword } from './ResetPassword';

@@ -320,9 +320,8 @@ export default function AddListing() {
 
   // Cancel listing creation
   const handleCancel = () => {
-    if (window.confirm(t.dashboard.confirmCancel || 'Da li ste sigurni da želite da otkažete? Svi podaci će biti izgubljeni.')) {
-      navigate('/dashboard/my-listings');
-    }
+    warning(t.toasts.listingCanceled || 'Oglas otkazan', t.toasts.listingCanceledDesc || 'Podaci nisu sačuvani.');
+    navigate('/dashboard/my-listings');
   };
 
   // Save as draft
@@ -514,30 +513,30 @@ export default function AddListing() {
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.addListing}</h1>
-          <p className="text-gray-500 dark:text-gray-400">{t.dashboard.basicInfo}</p>
+      <div className="flex justify-between items-start mb-4 sm:mb-6 gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{t.dashboard.addListing}</h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{t.dashboard.basicInfo}</p>
         </div>
         <button
           type="button"
           onClick={handleCancel}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-          {t.dashboard.cancel || 'Otkaži'}
+          <span className="hidden sm:inline">{t.dashboard.cancel || 'Otkaži'}</span>
         </button>
       </div>
 
       {/* Step Indicator */}
-      <div className="flex items-center justify-center mb-8">
+      <div className="flex items-center justify-center mb-4 sm:mb-8 overflow-x-auto pb-2">
         {steps.map((s, idx) => (
-          <div key={s.num} className="flex items-center">
+          <div key={s.num} className="flex items-center flex-shrink-0">
             <div
               onClick={() => s.num < step && setStep(s.num)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-medium cursor-pointer transition-colors ${
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-medium text-sm sm:text-base cursor-pointer transition-colors ${
                 s.num <= step
                   ? 'bg-[#e85d45] text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
@@ -546,7 +545,7 @@ export default function AddListing() {
               {s.num}
             </div>
             {idx < steps.length - 1 && (
-              <div className={`w-16 h-1 mx-2 ${s.num < step ? 'bg-[#e85d45]' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`w-6 sm:w-16 h-1 mx-1 sm:mx-2 ${s.num < step ? 'bg-[#e85d45]' : 'bg-gray-200 dark:bg-gray-700'}`} />
             )}
           </div>
         ))}
@@ -554,49 +553,49 @@ export default function AddListing() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
+        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
           {/* Step 1: Basic Info */}
           {step === 1 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.basicInfo}</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.basicInfo}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.descriptionPlaceholder}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">{t.dashboard.descriptionPlaceholder}</p>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                   {t.dashboard.listingTitle} *
                 </label>
                 <input
                   {...register('title')}
                   placeholder={t.dashboard.titlePlaceholder}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                 />
-                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+                {errors.title && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.title.message}</p>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                     {t.dashboard.category} *
                   </label>
                   <select
                     {...register('categoryId')}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
                     <option value="">{t.dashboard.selectCategory}</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{getCategoryName(cat.slug, cat.name)}</option>
                     ))}
                   </select>
-                  {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>}
+                  {errors.categoryId && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.categoryId.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                     {t.dashboard.listingType} *
                   </label>
                   <select
@@ -627,14 +626,14 @@ export default function AddListing() {
 
           {/* Step 2: Images */}
           {step === 2 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.images}</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.images}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.maxImages}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">{t.dashboard.maxImages}</p>
 
               {/* Image Upload Area */}
               <div
@@ -662,7 +661,7 @@ export default function AddListing() {
                     handleImageChange(fakeEvent);
                   }
                 }}
-                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-[#e85d45] transition-colors"
+                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:border-[#e85d45] transition-colors"
               >
                 <input
                   ref={fileInputRef}
@@ -672,29 +671,29 @@ export default function AddListing() {
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="text-gray-600 dark:text-gray-400">{t.dashboard.dragAndDrop} <span className="text-[#e85d45]">{t.dashboard.browseFiles}</span></p>
-                <p className="text-sm text-gray-400 mt-2">PNG, JPG - 5MB max</p>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{t.dashboard.dragAndDrop} <span className="text-[#e85d45]">{t.dashboard.browseFiles}</span></p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-2">PNG, JPG - 5MB max</p>
               </div>
 
               {/* Image Previews */}
               {imagePreview.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
                   {imagePreview.map((src, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={src}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-24 sm:h-32 object-cover rounded-lg"
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white p-1 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -707,47 +706,47 @@ export default function AddListing() {
 
           {/* Step 3: Features */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.resource.features}</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t.resource.features}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.selectFeatures || 'Izaberite karakteristike koje vaš proizvod/usluga poseduje'}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">{t.dashboard.selectFeatures || 'Izaberite karakteristike koje vaš proizvod/usluga poseduje'}</p>
 
               {/* Feature Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {availableFeatures.map((feature) => (
                   <button
                     key={feature}
                     type="button"
                     onClick={() => toggleFeature(feature)}
-                    className={`flex items-center gap-2 p-3 border rounded-lg transition-all ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 border rounded-lg transition-all ${
                       selectedFeatures.includes(feature)
                         ? 'border-[#e85d45] bg-[#e85d45]/10 text-[#e85d45]'
                         : 'border-gray-300 dark:border-gray-600 hover:border-[#e85d45] text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <span className={`w-5 h-5 flex items-center justify-center border rounded ${
+                    <span className={`w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center border rounded flex-shrink-0 ${
                       selectedFeatures.includes(feature)
                         ? 'bg-[#e85d45] border-[#e85d45]'
                         : 'border-gray-400 dark:border-gray-500'
                     }`}>
                       {selectedFeatures.includes(feature) && (
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
                     </span>
-                    <span className="text-sm">{getFeatureName(feature)}</span>
+                    <span className="text-xs sm:text-sm truncate">{getFeatureName(feature)}</span>
                   </button>
                 ))}
               </div>
 
               {/* Custom Feature Input */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="mt-4 sm:mt-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                   {t.dashboard.addCustomFeature || 'Dodaj prilagođenu karakteristiku'}
                 </label>
                 <div className="flex gap-2">
@@ -757,12 +756,12 @@ export default function AddListing() {
                     onChange={(e) => setCustomFeature(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomFeature())}
                     placeholder={t.dashboard.customFeaturePlaceholder || 'Npr. Besplatan WiFi, Klima...'}
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                    className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
                   />
                   <button
                     type="button"
                     onClick={addCustomFeature}
-                    className="px-4 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors"
+                    className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
                   >
                     {t.common.add || 'Dodaj'}
                   </button>
@@ -771,15 +770,15 @@ export default function AddListing() {
 
               {/* Selected Features Summary */}
               {selectedFeatures.length > 0 && (
-                <div className="mt-6 p-4 bg-gray-50 dark:bg-[#252525] rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-50 dark:bg-[#252525] rounded-lg">
+                  <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
                     {t.dashboard.selectedFeatures || 'Izabrane karakteristike'} ({selectedFeatures.length}):
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {selectedFeatures.map((feature) => (
                       <span
                         key={feature}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-[#e85d45]/10 text-[#e85d45] rounded-full text-sm"
+                        className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-[#e85d45]/10 text-[#e85d45] rounded-full text-xs sm:text-sm"
                       >
                         {getFeatureName(feature)}
                         <button
@@ -787,7 +786,7 @@ export default function AddListing() {
                           onClick={() => toggleFeature(feature)}
                           className="hover:bg-[#e85d45]/20 rounded-full p-0.5"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
@@ -801,19 +800,19 @@ export default function AddListing() {
 
           {/* Step 4: Location */}
           {step === 4 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.location}</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.location}</h2>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.enterPropertyAddress}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">{t.dashboard.enterPropertyAddress}</p>
 
               {/* Country Select */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                   {t.dashboard.country} *
                 </label>
                 <select
@@ -825,7 +824,7 @@ export default function AddListing() {
                     setValue('location.city', '');
                     setValue('location.municipality', '');
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                 >
                   {countries.map(country => (
                     <option key={country.code} value={country.name}>{country.name}</option>
@@ -833,10 +832,10 @@ export default function AddListing() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* City Select */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                     {t.dashboard.city} *
                   </label>
                   <select
@@ -846,25 +845,25 @@ export default function AddListing() {
                       setValue('location.city', e.target.value);
                       setValue('location.municipality', '');
                     }}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                   >
                     <option value="">{t.dashboard.selectCity}</option>
                     {getCitiesForCountry(selectedCountry).map(city => (
                       <option key={city.name} value={city.name}>{city.name}</option>
                     ))}
                   </select>
-                  {errors.location?.city && <p className="text-red-500 text-sm mt-1">{errors.location.city.message}</p>}
+                  {errors.location?.city && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.location.city.message}</p>}
                 </div>
 
                 {/* Municipality Select */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                     {t.dashboard.municipality}
                   </label>
                   <select
                     {...register('location.municipality')}
                     disabled={!selectedCity || getMunicipalitiesForCity(selectedCountry, selectedCity).length === 0}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">{t.dashboard.selectMunicipality}</option>
                     {getMunicipalitiesForCity(selectedCountry, selectedCity).map(m => (
@@ -875,13 +874,13 @@ export default function AddListing() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                   {t.dashboard.address}
                 </label>
                 <input
                   {...register('location.address')}
                   placeholder="npr. Kralja Milana 22"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -889,24 +888,24 @@ export default function AddListing() {
 
           {/* Step 5: Price */}
           {step === 5 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.price}</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.price}</h2>
               </div>
               
               {/* Show message for menjam/poklanjam */}
               {!isPriceRequired ? (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
-                  <svg className="w-12 h-12 mx-auto text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-6 text-center">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-green-500 mb-2 sm:mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-green-800 dark:text-green-300 mb-1 sm:mb-2">
                     {currentStatus === 'poklanjam' ? 'Poklanjate ovaj artikal' : 'Menjate ovaj artikal'}
                   </h3>
-                  <p className="text-green-600 dark:text-green-400">
+                  <p className="text-xs sm:text-sm text-green-600 dark:text-green-400">
                     {currentStatus === 'poklanjam' 
                       ? 'Za poklone ne treba unositi cenu. Možete direktno objaviti oglas.'
                       : 'Za zamenu ne treba unositi cenu. U opisu navedite šta želite u zamenu.'}
@@ -914,29 +913,29 @@ export default function AddListing() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.setPriceForRenting}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">{t.dashboard.setPriceForRenting}</p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                         {t.dashboard.priceEur} *
                       </label>
                       <input
                         {...register('pricePerDay')}
                         type="number"
                         placeholder="100"
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                       />
-                      {errors.pricePerDay && <p className="text-red-500 text-sm mt-1">{errors.pricePerDay.message}</p>}
+                      {errors.pricePerDay && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.pricePerDay.message}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                         {t.dashboard.perPeriod} *
                       </label>
                       <select
                         {...register('rentalType')}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent transition-all"
                       >
                         {rentalTypes.map(type => (
                           <option key={type.value} value={type.value}>{type.label}</option>
@@ -958,22 +957,22 @@ export default function AddListing() {
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4 sm:mt-6">
           <button
             type="button"
             onClick={prevStep}
             disabled={step === 1}
-            className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="order-2 sm:order-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t.dashboard.back}
           </button>
 
-          <div className="flex gap-3">
+          <div className="order-1 sm:order-2 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               type="button"
               onClick={saveAsDraft}
               disabled={isSavingDraft}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSavingDraft ? (t.dashboard.saving || 'Čuvanje...') : t.dashboard.saveAsDraft}
             </button>
@@ -982,7 +981,7 @@ export default function AddListing() {
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors"
               >
                 {t.dashboard.next}
               </button>
@@ -990,7 +989,7 @@ export default function AddListing() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? t.dashboard.publishing : t.dashboard.publishListing}
               </button>

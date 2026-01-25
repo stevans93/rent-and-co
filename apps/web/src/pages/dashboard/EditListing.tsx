@@ -342,94 +342,96 @@ export default function EditListing() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Izmeni oglas</h1>
-        <p className="text-gray-500 dark:text-gray-400">Ažurirajte informacije o vašem oglasu</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Izmeni oglas</h1>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Ažurirajte informacije o vašem oglasu</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
         {/* Basic Info */}
-        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Osnovne informacije</h2>
+        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Osnovne informacije</h2>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                 Naslov *
               </label>
               <input
                 {...register('title')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
               />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+              {errors.title && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.title.message}</p>}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                  Kategorija *
+                </label>
+                <select
+                  {...register('categoryId')}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                >
+                  <option value="">{t.listings?.selectCategory || 'Izaberite kategoriju'}</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>{getCategoryName(cat.slug, cat.name)}</option>
+                  ))}
+                </select>
+                {errors.categoryId && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.categoryId.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                  Tip oglasa *
+                </label>
+                <select
+                  {...register('status')}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                >
+                  {listingTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kategorija *
-              </label>
-              <select
-                {...register('categoryId')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
-              >
-                <option value="">{t.listings?.selectCategory || 'Izaberite kategoriju'}</option>
-                {categories.map(cat => (
-                  <option key={cat._id} value={cat._id}>{getCategoryName(cat.slug, cat.name)}</option>
-                ))}
-              </select>
-              {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tip oglasa *
-              </label>
-              <select
-                {...register('status')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
-              >
-                {listingTypes.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                 Opis *
               </label>
               <textarea
                 {...register('description')}
-                rows={5}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent resize-none"
+                rows={4}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent resize-none"
               />
-              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+              {errors.description && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.description.message}</p>}
             </div>
           </div>
         </div>
 
         {/* Images */}
-        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Fotografije</h2>
+        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Fotografije</h2>
           
           {/* Existing Images */}
           {existingImages.length > 0 && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Postojeće fotografije</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mb-3 sm:mb-4">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">Postojeće fotografije</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
                 {existingImages.map((img, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={getImageUrl(img.url)}
                       alt={img.alt || `Slika ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-full h-24 sm:h-32 object-cover rounded-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeExistingImage(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white p-1 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -441,22 +443,22 @@ export default function EditListing() {
 
           {/* New Images */}
           {newImagePreviews.length > 0 && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Nove fotografije</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mb-3 sm:mb-4">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">Nove fotografije</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
                 {newImagePreviews.map((src, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={src}
                       alt={`Nova slika ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-full h-24 sm:h-32 object-cover rounded-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeNewImage(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white p-1 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -469,7 +471,7 @@ export default function EditListing() {
           {/* Upload Area */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-[#e85d45] transition-colors"
+            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:border-[#e85d45] transition-colors"
           >
             <input
               ref={fileInputRef}
@@ -479,20 +481,20 @@ export default function EditListing() {
               onChange={handleImageChange}
               className="hidden"
             />
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <p className="text-gray-600 dark:text-gray-400">Dodajte nove fotografije</p>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Dodajte nove fotografije</p>
           </div>
         </div>
 
         {/* Location */}
-        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Lokacija</h2>
+        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Lokacija</h2>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Država</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Država</label>
               <select
                 value={selectedCountry}
                 onChange={(e) => {
@@ -501,7 +503,7 @@ export default function EditListing() {
                   setValue('location.country', e.target.value);
                   setValue('location.city', '');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
               >
                 {countries.map(country => (
                   <option key={country.code} value={country.name}>{country.name}</option>
@@ -509,31 +511,31 @@ export default function EditListing() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grad *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Grad *</label>
                 <select
                   value={selectedCity}
                   onChange={(e) => {
                     setSelectedCity(e.target.value);
                     setValue('location.city', e.target.value);
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
                 >
                   <option value="">Izaberite grad</option>
                   {getCitiesForCountry(selectedCountry).map(city => (
                     <option key={city.name} value={city.name}>{city.name}</option>
                   ))}
                 </select>
-                {errors.location?.city && <p className="text-red-500 text-sm mt-1">{errors.location.city.message}</p>}
+                {errors.location?.city && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.location.city.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opština</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Opština</label>
                 <select
                   {...register('location.municipality')}
                   disabled={!selectedCity || getMunicipalitiesForCity(selectedCountry, selectedCity).length === 0}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent disabled:opacity-50"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent disabled:opacity-50"
                 >
                   <option value="">Izaberite opštinu</option>
                   {getMunicipalitiesForCity(selectedCountry, selectedCity).map(m => (
@@ -544,11 +546,11 @@ export default function EditListing() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adresa</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Adresa</label>
               <input
                 {...register('location.address')}
                 placeholder="npr. Kralja Milana 22"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
               />
             </div>
           </div>
@@ -556,24 +558,24 @@ export default function EditListing() {
 
         {/* Price */}
         {isPriceRequired && (
-          <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cena</h2>
+          <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Cena</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cena po danu</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Cena po danu</label>
                 <input
                   type="number"
                   step="0.01"
                   {...register('pricePerDay')}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Valuta</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">Valuta</label>
                 <select
                   {...register('currency')}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#e85d45] focus:border-transparent"
                 >
                   <option value="EUR">EUR (€)</option>
                   <option value="RSD">RSD (дин)</option>
@@ -586,24 +588,24 @@ export default function EditListing() {
 
         {/* Error */}
         {submitError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4 text-sm text-red-700 dark:text-red-400">
             {submitError}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
           <button
             type="button"
             onClick={() => navigate('/dashboard/my-listings')}
-            className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="order-2 sm:order-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             Otkaži
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-3 bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="order-1 sm:order-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#e85d45] hover:bg-[#d54d35] text-white rounded-lg font-medium transition-colors disabled:opacity-50"
           >
             {isSubmitting ? 'Čuvanje...' : 'Sačuvaj izmene'}
           </button>

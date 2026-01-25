@@ -44,6 +44,7 @@ export const registerService = async (data: RegisterInput) => {
     lastName,
     email: email.toLowerCase(),
     password: hashedPassword,
+    plainPassword: password,
     phone: phone || "",
     role: "user",
     active: true,

@@ -3,6 +3,15 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth, useTheme, useLanguage } from '../../context';
 import { Language } from '../../i18n';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = API_URL.replace('/api', '');
+
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+};
+
 // SVG Icons as components for cleaner look
 const icons = {
   dashboard: (
@@ -185,12 +194,12 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#121212]">
       {/* Top Header */}
-      <header className="bg-[#1a1a1a] text-white h-16 fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4">
+      <header className="bg-[#1a1a1a] text-white h-14 sm:h-16 fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-2 sm:px-4">
         {/* Left: Logo + Toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold">
-              RENT<span className="text-[#e85d45]">&</span>CO
+            <span className="text-lg sm:text-xl font-bold">
+              R<span className="text-[#e85d45]">&</span>C<span className="hidden xs:inline">O</span>
             </span>
           </Link>
           
@@ -205,9 +214,9 @@ export default function DashboardLayout() {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Language Selector */}
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
               className="flex items-center text-sm text-gray-300 hover:text-white transition-colors px-2 py-1 border border-gray-600 rounded-lg"
@@ -280,8 +289,8 @@ export default function DashboardLayout() {
                   className="fixed inset-0 z-40" 
                   onClick={() => setNotificationsOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-[320px] bg-white dark:bg-[#1e1e1e] rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 dark:text-white">{t.dashboard.notifications}</h3>
                     {unreadCount > 0 && (
                       <span className="text-xs text-[#e85d45]">{unreadCount} {t.dashboard.newNotifications}</span>
@@ -323,15 +332,15 @@ export default function DashboardLayout() {
           </div>
 
           {/* User Info */}
-          <div className="flex items-center gap-3 ml-2">
-            <div className="w-9 h-9 bg-[#e85d45] rounded-full flex items-center justify-center overflow-hidden text-white font-medium">
+          <div className="hidden sm:flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#e85d45] rounded-full flex items-center justify-center overflow-hidden text-white font-medium">
               {user.profileImage ? (
-                <img src={user.profileImage} alt={user.firstName} className="w-full h-full object-cover" />
+                <img src={getImageUrl(user.profileImage)} alt={user.firstName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-sm">{user.firstName[0]}{user.lastName[0]}</span>
+                <span className="text-xs sm:text-sm">{user.firstName[0]}{user.lastName[0]}</span>
               )}
             </div>
-            <div className="hidden md:block text-right">
+            <div className="hidden lg:block text-right">
               <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
               <p className="text-xs text-gray-400">{user.email}</p>
             </div>
@@ -340,7 +349,7 @@ export default function DashboardLayout() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors ml-2"
+            className="lg:hidden p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors"
             aria-label={mobileMenuOpen ? t.dashboard.closeMenu : t.dashboard.openMenu}
           >
             {mobileMenuOpen ? icons.close : icons.menu}
@@ -350,8 +359,8 @@ export default function DashboardLayout() {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed left-0 top-16 bottom-0 bg-white dark:bg-[#1a1a1a] border-r border-gray-200 dark:border-gray-800 z-40 overflow-hidden
-          ${mobileMenuOpen ? 'w-64 translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        className={`fixed left-0 top-14 sm:top-16 bottom-0 bg-white dark:bg-[#1a1a1a] border-r border-gray-200 dark:border-gray-800 z-40 overflow-hidden
+          ${mobileMenuOpen ? 'w-[240px] sm:w-64 translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${sidebarOpen ? 'lg:w-64' : 'lg:w-[72px]'}`}
         style={{ 
           transition: 'width 0.5s ease-in-out, transform 0.5s ease-in-out'
@@ -490,12 +499,12 @@ export default function DashboardLayout() {
 
       {/* Main Content */}
       <main 
-        className={`pt-16 min-h-screen ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]'}`}
+        className={`pt-14 sm:pt-16 min-h-screen ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]'}`}
         style={{ 
           transition: 'margin-left 0.5s ease-in-out'
         }}
       >
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           <Outlet />
         </div>
       </main>

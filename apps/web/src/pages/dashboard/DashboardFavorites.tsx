@@ -43,6 +43,8 @@ export default function DashboardFavorites() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || '');
+  const [selectedType, setSelectedType] = useState(searchParams.get('type') || '');
   const [removeModal, setRemoveModal] = useState<{ open: boolean; item: FavoriteResource | null }>({ open: false, item: null });
   const [removing, setRemoving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,14 +75,18 @@ export default function DashboardFavorites() {
     const limitParam = searchParams.get('limit');
     const searchParam = searchParams.get('search');
     const categoryParam = searchParams.get('category');
+    const statusParam = searchParams.get('status');
+    const typeParam = searchParams.get('type');
     
     const newPage = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
     const newLimit = limitParam ? Math.max(1, parseInt(limitParam)) : (parseInt(localStorage.getItem('favoritePerPage') || '10'));
     const newSearch = searchParam || '';
     const newCategory = categoryParam || '';
+    const newStatus = statusParam || '';
+    const newType = typeParam || '';
     
     // Check if any value is different
-    const hasChanges = newPage !== currentPage || newLimit !== perPage || newSearch !== searchQuery || newCategory !== selectedCategory;
+    const hasChanges = newPage !== currentPage || newLimit !== perPage || newSearch !== searchQuery || newCategory !== selectedCategory || newStatus !== selectedStatus || newType !== selectedType;
     
     if (hasChanges) {
       isSyncingFromUrl.current = true;
@@ -88,6 +94,8 @@ export default function DashboardFavorites() {
       setPerPage(newLimit);
       setSearchQuery(newSearch);
       setSelectedCategory(newCategory);
+      setSelectedStatus(newStatus);
+      setSelectedType(newType);
       // Reset the flag after a short delay to allow state updates to complete
       setTimeout(() => {
         isSyncingFromUrl.current = false;
@@ -105,17 +113,21 @@ export default function DashboardFavorites() {
     if (perPage !== 10) params.set('limit', perPage.toString());
     if (searchQuery) params.set('search', searchQuery);
     if (selectedCategory) params.set('category', selectedCategory);
+    if (selectedStatus) params.set('status', selectedStatus);
+    if (selectedType) params.set('type', selectedType);
     
     // Check if URL needs to be updated
     const currentUrlPage = parseInt(searchParams.get('page') || '1');
     const currentUrlLimit = parseInt(searchParams.get('limit') || '10');
     const currentUrlSearch = searchParams.get('search') || '';
     const currentUrlCategory = searchParams.get('category') || '';
+    const currentUrlStatus = searchParams.get('status') || '';
+    const currentUrlType = searchParams.get('type') || '';
     
-    if (currentPage !== currentUrlPage || perPage !== currentUrlLimit || searchQuery !== currentUrlSearch || selectedCategory !== currentUrlCategory) {
+    if (currentPage !== currentUrlPage || perPage !== currentUrlLimit || searchQuery !== currentUrlSearch || selectedCategory !== currentUrlCategory || selectedStatus !== currentUrlStatus || selectedType !== currentUrlType) {
       setSearchParams(params);
     }
-  }, [currentPage, perPage, searchQuery, selectedCategory, setSearchParams]);
+  }, [currentPage, perPage, searchQuery, selectedCategory, selectedStatus, selectedType, setSearchParams]);
 
   // Fetch favorites with backend search
   const fetchFavorites = useCallback(async () => {
@@ -128,6 +140,8 @@ export default function DashboardFavorites() {
       params.set('limit', perPage.toString());
       if (debouncedSearchQuery) params.set('search', debouncedSearchQuery);
       if (selectedCategory) params.set('category', selectedCategory);
+      if (selectedStatus) params.set('status', selectedStatus);
+      if (selectedType) params.set('type', selectedType);
       
       const response = await fetch(`${API_URL}/favorites?${params.toString()}`, {
         headers: {
@@ -149,7 +163,7 @@ export default function DashboardFavorites() {
     } finally {
       setLoading(false);
     }
-  }, [token, currentPage, perPage, debouncedSearchQuery, selectedCategory, showError, t]);
+  }, [token, currentPage, perPage, debouncedSearchQuery, selectedCategory, selectedStatus, selectedType, showError, t]);
 
   // Fetch all categories
   const fetchCategories = useCallback(async () => {
@@ -237,22 +251,34 @@ export default function DashboardFavorites() {
     setCurrentPage(1);
   };
 
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+    setCurrentPage(1);
+  };
+
   const handleClearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
+    setSelectedStatus('');
+    setSelectedType('');
     setCurrentPage(1);
     info(t.dashboard?.filtersCleared || 'Filtri očišćeni', t.dashboard?.filtersClearedDesc || 'Svi filtri su resetovani');
   };
 
-  const hasActiveFilters = searchQuery !== '' || selectedCategory !== '';
+  const hasActiveFilters = searchQuery !== '' || selectedCategory !== '' || selectedStatus !== '' || selectedType !== '';
 
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.favorites || 'Omiljeni oglasi'}</h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.favorites || 'Omiljeni oglasi'}</h1>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
             {totalCount} {totalCount === 1 ? (t.dashboard.savedListing || 'sačuvan oglas') : (t.dashboard.savedListings || 'sačuvanih oglasa')}
           </p>
         </div>
@@ -260,95 +286,76 @@ export default function DashboardFavorites() {
           <button
             onClick={handleClearFilters}
             disabled={!hasActiveFilters}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1.5 sm:gap-2 ${
               hasActiveFilters 
                 ? 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800' 
                 : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            {t.dashboard?.clearFilters || 'Očisti filtere'}
+            <span className="hidden sm:inline">{t.dashboard?.clearFilters || 'Očisti filtere'}</span>
           </button>
           {totalCount > 0 && (
             <button
               onClick={handleClearAll}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1.5 sm:gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              {t.dashboard?.clearAllFavorites || 'Obriši sve oglase'}
+              <span className="hidden sm:inline">{t.dashboard?.clearAllFavorites || 'Obriši sve oglase'}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      {totalCount > 0 && (
-        <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-4 mb-6 border border-gray-100 dark:border-gray-800">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder={t.dashboard.searchFavorites || 'Pretraži omiljene...'}
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e85d45]/50 focus:border-[#e85d45]"
-                />
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#e85d45]/50 focus:border-[#e85d45]"
-            >
-              <option value="">{t.dashboard.allCategories || 'Sve kategorije'}</option>
-              {allCategories.map(cat => (
-                <option key={cat._id} value={cat.name}>
-                  {(t.categories as Record<string, string>)[cat.slug] || cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Favorites Table */}
       <div className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900 dark:text-white">
-            {searchQuery || selectedCategory 
+        {/* Header with Title, Search and Pagination */}
+        <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
+          <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+            {hasActiveFilters 
               ? `${t.dashboard.found || 'Pronađeno'} (${favorites.length})` 
               : `${t.dashboard.allFavorites || 'Svi omiljeni'} (${totalCount})`}
           </h2>
           
-          {totalCount > 0 && (
-            <select
-              value={perPage}
-              onChange={(e) => handlePerPageChange(Number(e.target.value))}
-              className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
-            >
-              <option value={5}>5 {t.dashboard.perPage || 'po stranici'}</option>
-              <option value={10}>10 {t.dashboard.perPage || 'po stranici'}</option>
-              <option value={15}>15 {t.dashboard.perPage || 'po stranici'}</option>
-            </select>
-          )}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+            {/* Search Bar */}
+            <div className="relative">
+              <svg className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t.dashboard.searchFavorites || 'Pretraži omiljene...'}
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full sm:w-48 pl-8 sm:pl-9 pr-3 sm:pr-4 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20 focus:border-[#e85d45]"
+              />
+            </div>
+
+            {/* Per Page */}
+            {totalCount > 0 && (
+              <select
+                value={perPage}
+                onChange={(e) => handlePerPageChange(Number(e.target.value))}
+                className="px-2 sm:px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#e85d45]/20"
+              >
+                <option value={5}>5 {t.dashboard.perPage || 'po stranici'}</option>
+                <option value={10}>10 {t.dashboard.perPage || 'po stranici'}</option>
+                <option value={15}>15 {t.dashboard.perPage || 'po stranici'}</option>
+              </select>
+            )}
+          </div>
         </div>
 
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e85d45] mx-auto"></div>
           </div>
-        ) : totalCount === 0 && !searchQuery && !selectedCategory ? (
+        ) : totalCount === 0 && !hasActiveFilters ? (
           <div className="p-8 text-center">
             <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,113 +382,171 @@ export default function DashboardFavorites() {
               {t.dashboard.noResults || 'Nema rezultata za trenutne filtere.'}
             </p>
             <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('');
-              }}
+              onClick={handleClearFilters}
               className="text-[#e85d45] hover:underline"
             >
               {t.dashboard.resetFilters || 'Resetuj filtere'}
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-[#252525]">
-                <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.listing || 'Oglas'}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.category || 'Kategorija'}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.price || 'Cena'}</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.location || 'Lokacija'}</th>
-                  <th className="text-right px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.actions || 'Akcije'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {favorites.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors">
-                    <td className="px-4 py-4">
-                      <Link to={`/resources/${item.slug}`} className="flex items-center gap-3 group">
-                        {item.images && item.images.length > 0 ? (
-                          <img 
-                            src={getImageUrl(item.images[0].url)} 
-                            alt={item.title} 
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white group-hover:text-[#e85d45] transition-colors">{item.title}</p>
-                          <p className="text-xs text-gray-500">{item.status === 'active' ? (t.dashboard.activeStatus || 'Aktivan') : item.status}</p>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-xs font-medium text-[#e85d45] bg-[#e85d45]/10 px-2 py-1 rounded">
-                        {item.categoryId?.slug 
-                          ? ((t.categories as Record<string, string>)[item.categoryId.slug] || item.categoryId?.name || '-')
-                          : '-'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-gray-900 dark:text-white font-medium">
-                      {item.currency === 'EUR' ? '€' : item.currency}{item.pricePerDay}/{t.dashboard.perDayPrice || 'dan'}
-                    </td>
-                    <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
-                      {item.location.city}{item.location.address && `, ${item.location.address}`}
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/resources/${item.slug}`}
-                          className="p-2 text-gray-500 hover:text-[#e85d45] hover:bg-[#e85d45]/10 rounded-lg transition-colors"
-                          title={t.dashboard.viewListingTitle || 'Pogledaj oglas'}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </Link>
-                        <button
-                          onClick={() => setRemoveModal({ open: true, item })}
-                          className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title={t.dashboard.removeFromFavoritesTitle || 'Ukloni iz omiljenih'}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+              {favorites.map((item) => (
+                <div key={item._id} className="p-3 sm:p-4">
+                  <Link to={`/resources/${item.slug}`} className="flex gap-3 mb-2">
+                    {item.images && item.images.length > 0 ? (
+                      <img 
+                        src={getImageUrl(item.images[0].url)} 
+                        alt={item.title} 
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                       </div>
-                    </td>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.location.city}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-semibold text-[#e85d45]">
+                          {item.currency === 'EUR' ? '€' : item.currency}{item.pricePerDay}/{t.dashboard.perDayPrice || 'dan'}
+                        </span>
+                        <span className="text-[10px] font-medium text-[#e85d45] bg-[#e85d45]/10 px-1.5 py-0.5 rounded">
+                          {item.categoryId?.slug 
+                            ? ((t.categories as Record<string, string>)[item.categoryId.slug] || item.categoryId?.name || '-')
+                            : '-'}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <Link
+                      to={`/resources/${item.slug}`}
+                      className="p-2 text-gray-500 hover:text-[#e85d45] hover:bg-[#e85d45]/10 rounded-lg transition-colors"
+                      title={t.dashboard.viewListingTitle || 'Pogledaj oglas'}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </Link>
+                    <button
+                      onClick={() => setRemoveModal({ open: true, item })}
+                      className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title={t.dashboard.removeFromFavoritesTitle || 'Ukloni iz omiljenih'}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-[#252525]">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.listing || 'Oglas'}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.category || 'Kategorija'}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.price || 'Cena'}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.location || 'Lokacija'}</th>
+                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t.dashboard.actions || 'Akcije'}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {favorites.map((item) => (
+                    <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors">
+                      <td className="px-4 py-4">
+                        <Link to={`/resources/${item.slug}`} className="flex items-center gap-3 group">
+                          {item.images && item.images.length > 0 ? (
+                            <img 
+                              src={getImageUrl(item.images[0].url)} 
+                              alt={item.title} 
+                              className="w-12 h-12 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white group-hover:text-[#e85d45] transition-colors">{item.title}</p>
+                            <p className="text-xs text-gray-500">{item.status === 'active' ? (t.dashboard.activeStatus || 'Aktivan') : item.status}</p>
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-xs font-medium text-[#e85d45] bg-[#e85d45]/10 px-2 py-1 rounded">
+                          {item.categoryId?.slug 
+                            ? ((t.categories as Record<string, string>)[item.categoryId.slug] || item.categoryId?.name || '-')
+                            : '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-gray-900 dark:text-white font-medium">
+                        {item.currency === 'EUR' ? '€' : item.currency}{item.pricePerDay}/{t.dashboard.perDayPrice || 'dan'}
+                      </td>
+                      <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
+                        {item.location.city}{item.location.address && `, ${item.location.address}`}
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/resources/${item.slug}`}
+                            className="p-2 text-gray-500 hover:text-[#e85d45] hover:bg-[#e85d45]/10 rounded-lg transition-colors"
+                            title={t.dashboard.viewListingTitle || 'Pogledaj oglas'}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </Link>
+                          <button
+                            onClick={() => setRemoveModal({ open: true, item })}
+                            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title={t.dashboard.removeFromFavoritesTitle || 'Ukloni iz omiljenih'}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-4 border-t border-gray-100 dark:border-gray-800">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-3 sm:px-4 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 order-2 sm:order-1">
               {t.dashboard.showing || 'Prikazano'} {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, totalCount)} {t.dashboard.of || 'od'} {totalCount}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2 sm:px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {t.dashboard.previous || 'Prethodna'}
+                <span className="hidden sm:inline">{t.dashboard.previous || 'Prethodna'}</span>
+                <span className="sm:hidden">←</span>
               </button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-7 sm:w-8 h-7 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                     currentPage === page
                       ? 'bg-[#e85d45] text-white'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525]'
@@ -493,9 +558,10 @@ export default function DashboardFavorites() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2 sm:px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {t.dashboard.next || 'Sledeća'}
+                <span className="hidden sm:inline">{t.dashboard.next || 'Sledeća'}</span>
+                <span className="sm:hidden">→</span>
               </button>
             </div>
           </div>
